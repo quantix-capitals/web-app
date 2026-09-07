@@ -22,6 +22,7 @@ import {
   type KiteHolding,
   type KiteMfHolding,
 } from "@/lib/zerodha/types";
+import { useKiteCallback } from "@/lib/zerodha/use-callback";
 import { useZerodha } from "@/lib/zerodha/use-connection";
 
 /**
@@ -43,6 +44,9 @@ function Book() {
   const [tab, setTab] = useState<TabId>("equity");
   // Set by `/api/zerodha/login` when the Kite keys are missing from the env.
   const notConfigured = useSearchParams().get("zerodha") === "not-configured";
+  // Zerodha may land the login here rather than on /zerodha/callback, depending
+  // on which path the Kite app has registered. Finish it either way.
+  const callback = useKiteCallback();
 
   // One pull per visit. Prices only matter as of when you look at them, and the
   // effect re-runs when `refresh` changes identity, i.e. when the token changes.
@@ -56,10 +60,22 @@ function Book() {
         <PageHeader
           title="Portfolio"
           subtitle="Every position you hold, what it cost, and what it is worth now."
-          actions={<ConnectZerodhaButton />}
+          actions={callback.status === "working" ? null : <ConnectZerodhaButton />}
         />
         <Section flush>
-          {notConfigured ? (
+          {callback.status === "working" ? (
+            <EmptyState title="Connecting to Zerodha">
+              Finishing the handshake and reading your holdings. This takes a second.
+            </EmptyState>
+          ) : callback.status === "error" ? (
+            <EmptyState
+              icon={<IconPortfolio className="size-5" />}
+              title="Zerodha connection failed"
+              action={<ConnectZerodhaButton label="Try again" />}
+            >
+              {callback.error}
+            </EmptyState>
+          ) : notConfigured ? (
             <EmptyState
               icon={<IconPortfolio className="size-5" />}
               title="Zerodha is not configured"
