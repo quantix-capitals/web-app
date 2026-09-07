@@ -5,7 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { IconWatchlist } from "@/components/shell/nav-icons";
 import { Badge, EmptyState, Section, Tabs } from "@/components/ui/primitives";
-import { cn, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
+import { cn, formatDate, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
 import { toYahooSymbol } from "@/lib/market/symbols";
 import { useQuotes } from "@/lib/market/use-quotes";
 import { deleteList } from "@/lib/watchlist/actions";
@@ -60,7 +60,7 @@ export function ListsView({
             onChange={setTab}
             tabs={[
               { id: "mine", label: "Your baskets", count: mine.length },
-              { id: "public", label: "Public", count: shared.length },
+              { id: "public", label: "Shared with you", count: shared.length },
             ]}
           />
           <TotalsStrip totals={totals} />
@@ -71,10 +71,14 @@ export function ListsView({
         {sorted.length ? (
           <ListTable lists={sorted} quotes={quotes} showOwner={tab === "public"} />
         ) : (
-          <EmptyState icon={<IconWatchlist className="size-5" />} title="Nothing here yet">
+          <EmptyState
+            icon={<IconWatchlist className="size-5" />}
+            title="Nothing here yet"
+            action={tab === "mine" ? <NewBasketButton label="Add your first basket" /> : undefined}
+          >
             {tab === "mine"
               ? "Create a basket to get started."
-              : "No one has shared a public basket yet."}
+              : "No one else has shared a public basket yet — your own public baskets stay under “Your baskets”, badged Public."}
           </EmptyState>
         )}
       </Section>
@@ -112,7 +116,7 @@ function TotalsStrip({ totals }: { totals: ReturnType<typeof listPnl> }) {
             totals.unrealised === null ? "text-ink-muted" : moveTextClass(totals.unrealised),
           )}
         >
-          {totals.unrealised === null ? "—" : formatMoney(totals.unrealised)}
+          {totals.unrealised === null ? "—" : formatMoney(totals.unrealised, true)}
           {totals.returnPct !== null ? (
             <span className="ml-1.5 text-detail opacity-80">
               {formatPercent(totals.returnPct)}
@@ -193,7 +197,7 @@ function ListRow({
         pending && "opacity-50",
       )}
     >
-      <td className="px-3 py-3 pl-6">
+      <td className={cn("px-3 py-3 pl-6 border-l-2", rowAccentBorder(pnl.unrealised))}>
         <Link href={href} className="flex items-center gap-2">
           <span className="font-medium text-ink">{list.name}</span>
           {list.visibility === "public" ? <Badge tone="accent">Public</Badge> : null}
@@ -206,7 +210,7 @@ function ListRow({
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-ink-muted">{list.items.length}</td>
       <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        <div>{new Date(list.createdAt).toLocaleDateString()}</div>
+        <div>{formatDate(list.createdAt)}</div>
         <div className="text-meta text-ink-subtle">{formatRelative(list.createdAt)}</div>
       </td>
       {showOwner ? (
@@ -230,7 +234,7 @@ function ListRow({
           pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised),
         )}
       >
-        {pnl.unrealised === null ? "—" : formatMoney(pnl.unrealised)}
+        {pnl.unrealised === null ? "—" : formatMoney(pnl.unrealised, true)}
         {pnl.returnPct !== null ? (
           <div className="text-meta opacity-80">{formatPercent(pnl.returnPct)}</div>
         ) : null}
@@ -258,4 +262,12 @@ function ListRow({
 function moveTextClass(n: number): string {
   const tone = moveTone(n);
   return tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
+}
+
+/** A row's direction, as a 2px rule on its identity cell — legible before the
+ * digits are. */
+function rowAccentBorder(n: number | null): string {
+  if (n === null) return "border-l-transparent";
+  const tone = moveTone(n);
+  return tone === "gain" ? "border-l-gain" : tone === "loss" ? "border-l-loss" : "border-l-transparent";
 }

@@ -39,7 +39,7 @@ export async function createList(input: {
     .insert({
       user_id: user.id,
       name,
-      description: input.description?.trim() || null,
+      description: input.description?.trim().slice(0, 200) || null,
       created_by: origin,
       visibility,
     })
@@ -64,7 +64,9 @@ export async function updateList(
     if (!name) return { status: "error", error: "Name can't be empty." };
     patch.name = name;
   }
-  if (input.description !== undefined) patch.description = input.description.trim() || null;
+  if (input.description !== undefined) {
+    patch.description = input.description.trim().slice(0, 200) || null;
+  }
   if (input.visibility !== undefined) patch.visibility = input.visibility;
 
   const supabase = await createServerSupabase();

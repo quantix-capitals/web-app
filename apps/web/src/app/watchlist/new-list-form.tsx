@@ -47,13 +47,17 @@ export function NewListForm({ onCancel }: { onCancel?: () => void }) {
         />
       </div>
       <div>
-        <label className="text-detail text-ink-muted" htmlFor="list-description">
-          Description
-        </label>
+        <div className="flex items-baseline justify-between">
+          <label className="text-detail text-ink-muted" htmlFor="list-description">
+            Description
+          </label>
+          <span className="text-meta text-ink-subtle">{description.length}/200</span>
+        </div>
         <input
           id="list-description"
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value.slice(0, 200))}
+          maxLength={200}
           placeholder="Optional"
           className="mt-1 w-full rounded-md border border-line-strong bg-canvas px-3 py-2 text-body text-ink outline-none focus:border-accent"
         />

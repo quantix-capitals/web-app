@@ -1,10 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import { IconWatchlist } from "@/components/shell/nav-icons";
-import { ActionStyle, Badge, EmptyState, Section } from "@/components/ui/primitives";
-import { cn, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
+import { ActionStyle, Badge, EmptyState, Section, Stat, StatBand } from "@/components/ui/primitives";
+import { cn, formatDate, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
 import { toYahooSymbol } from "@/lib/market/symbols";
 import { useQuotes } from "@/lib/market/use-quotes";
 import { removeItem, setEntry } from "@/lib/watchlist/actions";
@@ -14,7 +14,6 @@ import { AddSymbol } from "./add-symbol";
 import { ListSettings } from "./list-settings";
 
 export function ListView({ list }: { list: WatchlistSummary }) {
-  const [showSettings, setShowSettings] = useState(false);
   const yahooSymbols = useMemo(
     () =>
       list.items
@@ -22,9 +21,13 @@ export function ListView({ list }: { list: WatchlistSummary }) {
         .map((i) => toYahooSymbol({ symbol: i.symbol, exchange: i.exchange })),
     [list.items],
   );
-  const { quotes, refresh, status } = useQuotes(yahooSymbols);
+  const { quotes, refresh, status, error, missing } = useQuotes(yahooSymbols);
   const totals = useMemo(() => listPnl(list.items, quotes), [list.items, quotes]);
-  const struck = new Date(list.createdAt).toLocaleDateString();
+  const struck = formatDate(list.createdAt);
+  // Nothing priced yet says nothing about *why* — still fetching, the feed
+  // came back empty, or it errored are three different facts that all sat
+  // behind the same dash before this.
+  const loadingPrices = status === "loading" && totals.pricedCount === 0;
 
   return (
     <div className="bg-canvas">
@@ -63,51 +66,102 @@ export function ListView({ list }: { list: WatchlistSummary }) {
             >
               {status === "loading" ? "Refreshing…" : "Refresh"}
             </button>
-            <button
-              type="button"
-              onClick={() => setShowSettings((s) => !s)}
-              aria-expanded={showSettings}
-              className={ActionStyle({ variant: "ghost" })}
-            >
-              Settings
-            </button>
+            <ListSettings list={list} />
           </div>
         ) : null}
       </header>
 
-      <dl className="flex flex-wrap items-baseline gap-x-6 gap-y-1 border-b border-line bg-sunken px-6 py-3 text-body">
-        <Figure label="Total value" lead>
-          {totals.marketValue === null ? "—" : formatMoney(totals.marketValue)}
-        </Figure>
-        <Figure label="Invested">
-          {totals.invested === null ? "—" : formatMoney(totals.invested)}
-        </Figure>
-        <Figure label={`P&L since ${struck}`} tone={totals.unrealised}>
-          {totals.unrealised === null ? "—" : formatMoney(totals.unrealised)}
-          {totals.returnPct !== null ? (
-            <span className="ml-1.5 text-detail opacity-80">
-              {formatPercent(totals.returnPct)}
-            </span>
-          ) : null}
-        </Figure>
-        <Figure label="Day change" tone={totals.dayChange}>
-          {totals.dayChange === null ? "—" : formatMoney(totals.dayChange)}
-        </Figure>
-        {totals.pricedCount > 0 && totals.pricedCount < totals.count ? (
-          <span className="text-meta text-ink-subtle">
-            {totals.pricedCount} of {totals.count} priced
-          </span>
-        ) : null}
-      </dl>
+      <Section className="bg-sunken">
+        <StatBand>
+          <Stat
+            label="Total value"
+            value={
+              totals.marketValue === null
+                ? loadingPrices
+                  ? "Loading…"
+                  : "—"
+                : formatMoney(totals.marketValue)
+            }
+            hint={
+              totals.pricedCount > 0 && totals.pricedCount < totals.count
+                ? `${totals.pricedCount} of ${totals.count} priced`
+                : undefined
+            }
+          />
+          <Stat
+            label="Invested"
+            value={
+              totals.invested === null
+                ? loadingPrices
+                  ? "Loading…"
+                  : "—"
+                : formatMoney(totals.invested)
+            }
+          />
+          <Stat
+            label={`P&L since ${struck}`}
+            value={
+              totals.unrealised === null
+                ? loadingPrices
+                  ? "Loading…"
+                  : "—"
+                : formatMoney(totals.unrealised, true)
+            }
+            hint={totals.returnPct !== null ? formatPercent(totals.returnPct) : undefined}
+            tone={totals.unrealised === null ? "neutral" : moveTone(totals.unrealised)}
+          />
+          <Stat
+            label="Day change"
+            value={
+              totals.dayChange === null
+                ? loadingPrices
+                  ? "Loading…"
+                  : "—"
+                : formatMoney(totals.dayChange, true)
+            }
+            tone={totals.dayChange === null ? "neutral" : moveTone(totals.dayChange)}
+          />
+        </StatBand>
+      </Section>
+
+      {status === "error" ? (
+        <div className="flex flex-wrap items-center gap-3 border-b border-line bg-loss-soft px-6 py-2.5 text-detail text-loss">
+          <span>Price feed unavailable{error ? ` — ${error}` : ""}.</span>
+          <button type="button" onClick={() => refresh()} className="font-medium underline underline-offset-2">
+            Retry
+          </button>
+        </div>
+      ) : null}
 
       {list.isOwner ? <AddSymbol listId={list.id} /> : null}
-      {showSettings && list.isOwner ? <ListSettings list={list} /> : null}
 
       <Section flush>
         {list.items.length ? (
-          <ItemsTable items={list.items} quotes={quotes} listId={list.id} isOwner={list.isOwner} />
+          <ItemsTable
+            items={list.items}
+            quotes={quotes}
+            status={status}
+            missing={missing}
+            onRetry={refresh}
+            listId={list.id}
+            isOwner={list.isOwner}
+          />
         ) : (
-          <EmptyState icon={<IconWatchlist className="size-5" />} title="No symbols yet">
+          <EmptyState
+            icon={<IconWatchlist className="size-5" />}
+            title="No symbols yet"
+            action={
+              list.isOwner ? (
+                <button
+                  type="button"
+                  onClick={() => document.getElementById("symbol-search")?.focus()}
+                  className={ActionStyle()}
+                >
+                  Add your first symbol
+                </button>
+              ) : undefined
+            }
+          >
             {list.isOwner
               ? "Search for a symbol above to start tracking this basket."
               : "This basket has no symbols."}
@@ -118,42 +172,20 @@ export function ListView({ list }: { list: WatchlistSummary }) {
   );
 }
 
-function Figure({
-  label,
-  children,
-  tone,
-  lead,
-}: {
-  label: string;
-  children: React.ReactNode;
-  /** A signed figure colours itself; anything else stays ink. */
-  tone?: number | null;
-  lead?: boolean;
-}) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <dt className="text-meta text-ink-muted">{label}</dt>
-      <dd
-        className={cn(
-          "tabular-nums",
-          lead && "font-serif text-lead",
-          tone === null || tone === undefined ? "text-ink" : moveTextClass(tone),
-        )}
-      >
-        {children}
-      </dd>
-    </div>
-  );
-}
-
 function ItemsTable({
   items,
   quotes,
+  status,
+  missing,
+  onRetry,
   listId,
   isOwner,
 }: {
   items: WatchlistItemView[];
   quotes: ReturnType<typeof useQuotes>["quotes"];
+  status: ReturnType<typeof useQuotes>["status"];
+  missing: string[];
+  onRetry: () => void;
   listId: string;
   isOwner: boolean;
 }) {
@@ -178,7 +210,16 @@ function ItemsTable({
         </thead>
         <tbody>
           {items.map((item) => (
-            <ItemRow key={item.id} item={item} quotes={quotes} listId={listId} isOwner={isOwner} />
+            <ItemRow
+              key={item.id}
+              item={item}
+              quotes={quotes}
+              status={status}
+              missing={missing}
+              onRetry={onRetry}
+              listId={listId}
+              isOwner={isOwner}
+            />
           ))}
         </tbody>
       </table>
@@ -189,11 +230,17 @@ function ItemsTable({
 function ItemRow({
   item,
   quotes,
+  status,
+  missing,
+  onRetry,
   listId,
   isOwner,
 }: {
   item: WatchlistItemView;
   quotes: ReturnType<typeof useQuotes>["quotes"];
+  status: ReturnType<typeof useQuotes>["status"];
+  missing: string[];
+  onRetry: () => void;
   listId: string;
   isOwner: boolean;
 }) {
@@ -203,7 +250,13 @@ function ItemRow({
     : "";
   const quote = quotes[yahooSymbol];
   const pnl = itemPnl(item, quote);
-  const priced = pnl.marketValue !== null;
+  const hasBaseline = item.entryPrice !== null;
+  // A quote that hasn't arrived yet and a quote the feed explicitly couldn't
+  // find are different facts — only the latter is something "Set entry"
+  // (which re-baselines against today's price) is meant to fix.
+  const stillLoading = !quote && status === "loading";
+  const feedFailed = !quote && (status === "error" || missing.includes(yahooSymbol));
+  const priceCell = stillLoading ? "Loading…" : "—";
 
   function onRemove() {
     startTransition(async () => {
@@ -228,7 +281,7 @@ function ItemRow({
         pending && "opacity-50",
       )}
     >
-      <td className="px-3 py-3 pl-6 text-left">
+      <td className={cn("px-3 py-3 pl-6 text-left border-l-2", rowAccentBorder(pnl.unrealised))}>
         <div className="flex items-center gap-2">
           <span className="font-mono font-medium text-ink">{item.symbol}</span>
           <Badge mono>{item.exchange}</Badge>
@@ -240,13 +293,13 @@ function ItemRow({
         {item.entryPrice === null ? "—" : formatMoney(item.entryPrice)}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        {item.entryAt ? new Date(item.entryAt).toLocaleDateString() : "—"}
+        {item.entryAt ? formatDate(item.entryAt) : "—"}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        {quote ? formatMoney(quote.price) : "—"}
+        {quote ? formatMoney(quote.price) : priceCell}
       </td>
       <td className="px-3 py-3 text-right tabular-nums text-ink">
-        {pnl.marketValue === null ? "—" : formatMoney(pnl.marketValue)}
+        {pnl.marketValue === null ? priceCell : formatMoney(pnl.marketValue)}
       </td>
       <td
         className={cn(
@@ -254,11 +307,11 @@ function ItemRow({
           pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised),
         )}
       >
-        {pnl.unrealised === null ? "—" : formatMoney(pnl.unrealised)}
+        {pnl.unrealised === null ? priceCell : formatMoney(pnl.unrealised, true)}
         {pnl.returnPct !== null ? (
           <div className="mt-0.5 text-meta opacity-80">{formatPercent(pnl.returnPct)}</div>
         ) : null}
-        {!priced && isOwner ? (
+        {!hasBaseline && isOwner ? (
           <button
             type="button"
             onClick={onSetEntry}
@@ -266,6 +319,15 @@ function ItemRow({
             className="mt-0.5 block w-full text-right text-meta text-accent-ink underline-offset-2 hover:underline"
           >
             Set entry
+          </button>
+        ) : null}
+        {hasBaseline && feedFailed ? (
+          <button
+            type="button"
+            onClick={onRetry}
+            className="mt-0.5 block w-full text-right text-meta text-accent-ink underline-offset-2 hover:underline"
+          >
+            Price unavailable — retry
           </button>
         ) : null}
       </td>
@@ -288,4 +350,12 @@ function ItemRow({
 function moveTextClass(n: number): string {
   const tone = moveTone(n);
   return tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
+}
+
+/** A row's direction, as a 2px rule on its identity cell — legible before the
+ * digits are. */
+function rowAccentBorder(n: number | null): string {
+  if (n === null) return "border-l-transparent";
+  const tone = moveTone(n);
+  return tone === "gain" ? "border-l-gain" : tone === "loss" ? "border-l-loss" : "border-l-transparent";
 }

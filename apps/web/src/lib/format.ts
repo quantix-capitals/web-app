@@ -8,6 +8,9 @@ export function cn(...parts: Array<string | false | null | undefined>): string {
  */
 export function formatMoney(
   amount: number,
+  /** A delta (P&L, day change) always carries its sign; a level (price,
+   * value) never does — pass true only for the former. */
+  signed: boolean = false,
   currency: string = "INR",
   locale: string = "en-IN",
 ): string {
@@ -15,6 +18,7 @@ export function formatMoney(
     style: "currency",
     currency,
     maximumFractionDigits: 2,
+    signDisplay: signed ? "exceptZero" : "auto",
   }).format(amount);
 }
 
@@ -32,6 +36,14 @@ export function formatClock(iso: string): string {
   return new Date(iso).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
+  });
+}
+
+export function formatDate(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
   });
 }
 

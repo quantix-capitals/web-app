@@ -6,6 +6,7 @@ import {
   Section,
   SectionHeader,
 } from "@/components/ui/primitives";
+import { formatDate } from "@/lib/format";
 import { createServerSupabase, getCurrentUser } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/client";
 import { SignInForm } from "./sign-in-form";
@@ -70,9 +71,7 @@ export default async function ProfilePage({
           <Field
             label="Member since"
             value={
-              profile?.created_at
-                ? new Date(profile.created_at).toLocaleDateString()
-                : undefined
+              profile?.created_at ? formatDate(profile.created_at) : undefined
             }
           />
         </dl>

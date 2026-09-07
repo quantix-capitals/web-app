@@ -8,6 +8,7 @@ import {
   ActionStyle,
   Badge,
   EmptyState,
+  SECTION_X,
   Section,
   SectionHeader,
   Stat,
@@ -119,13 +120,17 @@ function Book() {
         title="Portfolio"
         subtitle={
           <>
-            Connected to Zerodha as{" "}
-            <span className="text-ink">
-              {connection?.session.user_name ?? connection?.session.user_id}
+            <span className="block">
+              Connected to Zerodha as{" "}
+              <span className="text-ink">
+                {connection?.session.user_name ?? connection?.session.user_id}
+              </span>
+              {connection?.synced_at ? ` · synced ${formatRelative(connection.synced_at)}` : null}
             </span>
-            {" · book "}
-            <span className="text-ink tabular-nums">{formatMoney(bookValue)}</span>
-            {connection?.synced_at ? ` · synced ${formatRelative(connection.synced_at)}` : null}
+            <span className="mt-0.5 block">
+              Combined book (equity + funds):{" "}
+              <span className="text-ink tabular-nums">{formatMoney(bookValue)}</span>
+            </span>
           </>
         }
         actions={
@@ -171,7 +176,7 @@ function Book() {
         />
       </Section>
 
-      <Section>
+      <Section className="bg-sunken">
         <StatBand>
           <Stat label="Market value" value={formatMoney(totals.marketValue)} />
           <Stat
@@ -181,7 +186,7 @@ function Book() {
           />
           <Stat
             label="Unrealised P&L"
-            value={formatMoney(totals.unrealised)}
+            value={formatMoney(totals.unrealised, true)}
             hint={formatPercent(investedPct)}
             tone={moveTone(totals.unrealised)}
           />
@@ -189,7 +194,7 @@ function Book() {
               a zero that would read as "flat today". */}
           <Stat
             label="Day change"
-            value={totals.dayChange === null ? "—" : formatMoney(totals.dayChange)}
+            value={totals.dayChange === null ? "—" : formatMoney(totals.dayChange, true)}
             hint={
               totals.dayChange === null
                 ? "Funds are priced once a day"
@@ -198,6 +203,9 @@ function Book() {
             tone={totals.dayChange === null ? "neutral" : moveTone(totals.dayChange)}
           />
         </StatBand>
+        {bookValue > 0 ? (
+          <AllocationBar equity={equityTotals.marketValue} mf={mfTotals.marketValue} />
+        ) : null}
       </Section>
 
       <Section flush>
@@ -243,6 +251,47 @@ function Book() {
 /** Which side of the book is on screen. The tab strip itself lives in primitives. */
 type TabId = "equity" | "mf";
 
+/**
+ * Equity vs mutual funds, as a single stacked bar rather than a two-slice
+ * donut — a part-to-whole of exactly two categories reads faster as one bar
+ * split in two than as a circle. The 2px gaps between and around the fill are
+ * the surrounding `bg-sunken` showing through, not drawn borders. Neither
+ * segment touches gain/loss — those colors are reserved for signed P&L, so
+ * identity here comes from the accent (equity) against a neutral (funds).
+ */
+function AllocationBar({ equity, mf }: { equity: number; mf: number }) {
+  const total = equity + mf;
+  if (total <= 0) return null;
+  const equityPct = (equity / total) * 100;
+  const mfPct = 100 - equityPct;
+  const share = (n: number) => `${((n / total) * 100).toFixed(1)}%`;
+
+  return (
+    <div className={cn(SECTION_X, "flex flex-col gap-2 pb-5")}>
+      <div
+        role="img"
+        aria-label={`Allocation: ${share(equity)} equity, ${share(mf)} mutual funds`}
+        className="flex h-2.5 w-full gap-0.5"
+      >
+        {equityPct > 0 ? <div className="h-full bg-accent" style={{ width: `${equityPct}%` }} /> : null}
+        {mfPct > 0 ? <div className="h-full bg-ink-subtle" style={{ width: `${mfPct}%` }} /> : null}
+      </div>
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-detail text-ink-muted">
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden className="size-2 shrink-0 bg-accent" />
+          Equity <span className="text-ink tabular-nums">{formatMoney(equity)}</span>
+          <span className="text-ink-subtle">{share(equity)}</span>
+        </span>
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden className="size-2 shrink-0 bg-ink-subtle" />
+          Mutual funds <span className="text-ink tabular-nums">{formatMoney(mf)}</span>
+          <span className="text-ink-subtle">{share(mf)}</span>
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
   // Biggest position first — the number that moves the book most should be read
   // first, and Kite returns them in whatever order its ledger holds.
@@ -272,9 +321,9 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
             return (
               <tr
                 key={`${h.exchange}:${h.tradingsymbol}`}
-                className="border-b border-line last:border-b-0 hover:bg-sunken"
+                className="border-b border-line last:border-b-0 odd:bg-sunken/60 hover:bg-accent-soft/40"
               >
-                <Td left>
+                <Td left accent={moveTone(h.pnl)}>
                   <div className="flex items-center gap-2">
                     <span className="font-medium text-ink">{h.tradingsymbol}</span>
                     <Badge mono>{h.exchange}</Badge>
@@ -288,7 +337,7 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
                 <Td tone={moveTone(h.day_change)}>
                   {formatPercent(h.day_change_percentage / 100)}
                 </Td>
-                <Td tone={moveTone(h.pnl)}>{formatMoney(h.pnl)}</Td>
+                <Td tone={moveTone(h.pnl)}>{formatMoney(h.pnl, true)}</Td>
               </tr>
             );
           })}
@@ -327,9 +376,9 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
             return (
               <tr
                 key={`${h.folio ?? "—"}:${h.tradingsymbol}`}
-                className="border-b border-line last:border-b-0 hover:bg-sunken"
+                className="border-b border-line last:border-b-0 odd:bg-sunken/60 hover:bg-accent-soft/40"
               >
-                <Td left>
+                <Td left accent={moveTone(pnl)}>
                   <div className="max-w-[42ch] font-medium text-ink">{h.fund}</div>
                   {h.folio ? (
                     <div className="mt-0.5 font-mono text-meta text-ink-subtle">
@@ -343,7 +392,7 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
                 <Td>{formatMoney(h.last_price)}</Td>
                 <Td className="text-ink">{formatMoney(h.quantity * h.last_price)}</Td>
                 <Td tone={moveTone(pnl)}>
-                  {formatMoney(pnl)}
+                  {formatMoney(pnl, true)}
                   {/* A return is only meaningful against what was put in. */}
                   {invested > 0 ? (
                     <div className="mt-0.5 text-meta opacity-80">
@@ -380,16 +429,26 @@ function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
   );
 }
 
+const ROW_ACCENT: Record<"gain" | "loss" | "neutral", string> = {
+  gain: "border-l-gain",
+  loss: "border-l-loss",
+  neutral: "border-l-transparent",
+};
+
 function Td({
   children,
   className,
   tone,
   left,
+  accent,
 }: {
   children: React.ReactNode;
   className?: string;
   tone?: "gain" | "loss" | "neutral";
   left?: boolean;
+  /** A 2px rule on the identity cell, so a row's direction registers before
+   * its digits do. */
+  accent?: "gain" | "loss" | "neutral";
 }) {
   const color =
     tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
@@ -398,6 +457,8 @@ function Td({
       className={cn(
         "px-3 py-3 tabular-nums first:pl-6 last:pr-6",
         left ? "text-left" : "text-right",
+        accent && "border-l-2",
+        accent && ROW_ACCENT[accent],
         color,
         className,
       )}
