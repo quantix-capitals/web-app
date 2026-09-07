@@ -32,7 +32,7 @@ export function Modal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-[2px]"
       onClick={onClose}
     >
       <div
@@ -40,17 +40,27 @@ export function Modal({
         aria-modal="true"
         aria-label={title}
         onClick={(e) => e.stopPropagation()}
-        className="max-h-[85vh] w-full max-w-lg overflow-y-auto border border-line bg-canvas shadow-lg"
+        className="max-h-[85vh] w-full max-w-md animate-rise overflow-y-auto rounded-card border border-line bg-canvas shadow-lift"
       >
-        <div className="flex items-center justify-between border-b border-line bg-sunken px-6 py-3.5">
-          <h2 className="text-lead font-semibold tracking-tight text-ink">{title}</h2>
+        <div className="flex items-center justify-between gap-4 border-b border-line px-6 py-4">
+          <h2 className="font-serif text-lead tracking-tight text-ink">{title}</h2>
           <button
             type="button"
             onClick={onClose}
             aria-label="Close"
-            className="text-ink-subtle hover:text-ink"
+            className="-mr-1.5 inline-flex size-7 items-center justify-center rounded-md text-ink-subtle transition hover:bg-sunken hover:text-ink"
           >
-            ✕
+            <svg
+              aria-hidden
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              className="size-3.5"
+            >
+              <path d="m4 4 8 8M12 4l-8 8" />
+            </svg>
           </button>
         </div>
         {children}

@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useMemo, useState, useTransition } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { IconWatchlist } from "@/components/shell/nav-icons";
-import { Badge, EmptyState, Section, Tabs } from "@/components/ui/primitives";
+import { Badge, EmptyState, Section, StatInline, Tabs } from "@/components/ui/primitives";
+import { HeadRow, Sub, Table, Td, Th, Tr, RowAction } from "@/components/ui/table";
 import { cn, formatDate, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
 import { toYahooSymbol } from "@/lib/market/symbols";
 import { useQuotes } from "@/lib/market/use-quotes";
@@ -53,8 +54,10 @@ export function ListsView({
         actions={<NewBasketButton />}
       />
 
+      {/* Tabs and totals share one band, but not one baseline: the tabs sit on
+          the rule they underline, and the figures are centred against them. */}
       <Section>
-        <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 bg-sunken">
+        <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-2 bg-sunken pr-6">
           <Tabs
             active={tab}
             onChange={setTab}
@@ -63,7 +66,7 @@ export function ListsView({
               { id: "public", label: "Shared with you", count: shared.length },
             ]}
           />
-          <TotalsStrip totals={totals} />
+          <Totals totals={totals} />
         </div>
       </Section>
 
@@ -86,45 +89,29 @@ export function ListsView({
   );
 }
 
-/**
- * The page's totals, on one line rather than in a band of four figures. The
- * band was taller than the table it introduced and read as empty whenever a
- * basket had no priced symbols yet.
- */
-function TotalsStrip({ totals }: { totals: ReturnType<typeof listPnl> }) {
+function Totals({ totals }: { totals: ReturnType<typeof listPnl> }) {
   if (totals.marketValue === null && totals.invested === null) return null;
 
   return (
-    <dl className="flex flex-wrap items-baseline gap-x-5 gap-y-1 px-6 py-3 text-body">
-      <div className="flex items-baseline gap-2">
-        <dt className="text-meta text-ink-muted">Total value</dt>
-        <dd className="font-serif text-lead tabular-nums text-ink">
-          {totals.marketValue === null ? "—" : formatMoney(totals.marketValue)}
-        </dd>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <dt className="text-meta text-ink-muted">Invested</dt>
-        <dd className="tabular-nums text-ink-muted">
-          {totals.invested === null ? "—" : formatMoney(totals.invested)}
-        </dd>
-      </div>
-      <div className="flex items-baseline gap-2">
-        <dt className="text-meta text-ink-muted">Total gain</dt>
-        <dd
-          className={cn(
-            "tabular-nums",
-            totals.unrealised === null ? "text-ink-muted" : moveTextClass(totals.unrealised),
-          )}
-        >
-          {totals.unrealised === null ? "—" : formatMoney(totals.unrealised, true)}
-          {totals.returnPct !== null ? (
-            <span className="ml-1.5 text-detail opacity-80">
-              {formatPercent(totals.returnPct)}
-            </span>
-          ) : null}
-        </dd>
-      </div>
-    </dl>
+    <StatInline
+      className="py-2.5"
+      items={[
+        {
+          label: "Total value",
+          value: totals.marketValue === null ? "—" : formatMoney(totals.marketValue),
+        },
+        {
+          label: "Invested",
+          value: totals.invested === null ? "—" : formatMoney(totals.invested),
+        },
+        {
+          label: "Total gain",
+          value: totals.unrealised === null ? "—" : formatMoney(totals.unrealised, true),
+          hint: totals.returnPct === null ? undefined : formatPercent(totals.returnPct),
+          tone: totals.unrealised === null ? "neutral" : moveTone(totals.unrealised),
+        },
+      ]}
+    />
   );
 }
 
@@ -138,29 +125,27 @@ function ListTable({
   showOwner: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-225 border-collapse text-body">
-        <thead>
-          <tr className="border-b border-line bg-sunken text-meta text-ink-muted">
-            <th className="px-3 py-2.5 pl-6 text-left font-medium">Basket</th>
-            <th className="px-3 py-2.5 text-left font-medium">Description</th>
-            <th className="px-3 py-2.5 text-right font-medium">Stocks</th>
-            <th className="px-3 py-2.5 text-right font-medium">Struck</th>
-            {showOwner ? <th className="px-3 py-2.5 text-right font-medium">By</th> : null}
-            <th className="px-3 py-2.5 text-right font-medium">Value</th>
-            <th className="px-3 py-2.5 text-right font-medium">Gain / loss</th>
-            <th className="px-3 py-2.5 pr-6 text-right font-medium">
-              <span className="sr-only">Actions</span>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          {lists.map((list) => (
-            <ListRow key={list.id} list={list} quotes={quotes} showOwner={showOwner} />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table minWidth="min-w-225">
+      <HeadRow>
+        <Th align="left" first>
+          Basket
+        </Th>
+        <Th align="left">Description</Th>
+        <Th>Stocks</Th>
+        <Th>Struck</Th>
+        {showOwner ? <Th>By</Th> : null}
+        <Th>Value</Th>
+        <Th>Gain / loss</Th>
+        <Th last srOnly>
+          Actions
+        </Th>
+      </HeadRow>
+      <tbody>
+        {lists.map((list) => (
+          <ListRow key={list.id} list={list} quotes={quotes} showOwner={showOwner} />
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
@@ -189,85 +174,64 @@ function ListRow({
   }
 
   return (
-    // Rows alternate against the canvas so the eye can track one across eight
-    // columns — a hairline alone was not enough separation on a dark ground.
-    <tr
-      className={cn(
-        "border-b border-line last:border-b-0 odd:bg-sunken/60 hover:bg-accent-soft/40",
-        pending && "opacity-50",
-      )}
-    >
-      <td className={cn("px-3 py-3 pl-6 border-l-2", rowAccentBorder(pnl.unrealised))}>
+    <Tr dimmed={pending}>
+      <Td align="left" first>
         <Link href={href} className="flex items-center gap-2">
           <span className="font-medium text-ink">{list.name}</span>
           {list.visibility === "public" ? <Badge tone="accent">Public</Badge> : null}
         </Link>
-      </td>
-      <td className="px-3 py-3 text-left text-detail text-ink-muted">
+      </Td>
+      <Td align="left" className="text-detail text-ink-muted">
         <Link href={href} className="block max-w-[36ch] truncate">
           {list.description ?? <span className="text-ink-subtle">—</span>}
         </Link>
-      </td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">{list.items.length}</td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        <div>{formatDate(list.createdAt)}</div>
-        <div className="text-meta text-ink-subtle">{formatRelative(list.createdAt)}</div>
-      </td>
+      </Td>
+      <Td className="text-ink-muted">{list.items.length}</Td>
+      <Td className="text-ink-muted">
+        {formatDate(list.createdAt)}
+        <Sub>{formatRelative(list.createdAt)}</Sub>
+      </Td>
       {showOwner ? (
-        <td className="px-3 py-3 text-right">
+        <Td>
           <Badge tone={list.createdBy === "agent" ? "info" : "neutral"}>
             {list.createdBy === "agent" ? "Agent" : "Member"}
           </Badge>
-        </td>
+        </Td>
       ) : null}
-      <td className="px-3 py-3 text-right tabular-nums text-ink">
+      <Td className="text-ink">
         {pnl.marketValue === null ? "—" : formatMoney(pnl.marketValue)}
         {pnl.pricedCount > 0 && pnl.pricedCount < pnl.count ? (
-          <div className="text-meta text-ink-subtle">
+          <Sub>
             {pnl.pricedCount} of {pnl.count} priced
-          </div>
+          </Sub>
         ) : null}
-      </td>
-      <td
-        className={cn(
-          "px-3 py-3 text-right tabular-nums",
-          pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised),
-        )}
-      >
+      </Td>
+      <Td className={pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised)}>
         {pnl.unrealised === null ? "—" : formatMoney(pnl.unrealised, true)}
         {pnl.returnPct !== null ? (
-          <div className="text-meta opacity-80">{formatPercent(pnl.returnPct)}</div>
+          <Sub className={cn("opacity-80", moveTextClass(pnl.unrealised ?? 0))}>
+            {formatPercent(pnl.returnPct)}
+          </Sub>
         ) : null}
-      </td>
-      <td className="px-3 py-3 pr-6 text-right">
+      </Td>
+      <Td last>
         {list.isOwner ? (
-          <button
-            type="button"
+          <RowAction
+            danger
+            armed={confirming}
             onClick={onDelete}
             onBlur={() => setConfirming(false)}
             disabled={pending}
-            className={cn(
-              "text-meta whitespace-nowrap",
-              confirming ? "font-medium text-loss" : "text-ink-subtle hover:text-loss",
-            )}
           >
             {confirming ? "Confirm delete" : "Delete"}
-          </button>
+          </RowAction>
         ) : null}
-      </td>
-    </tr>
+      </Td>
+    </Tr>
   );
 }
 
 function moveTextClass(n: number): string {
   const tone = moveTone(n);
   return tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
-}
-
-/** A row's direction, as a 2px rule on its identity cell — legible before the
- * digits are. */
-function rowAccentBorder(n: number | null): string {
-  if (n === null) return "border-l-transparent";
-  const tone = moveTone(n);
-  return tone === "gain" ? "border-l-gain" : tone === "loss" ? "border-l-loss" : "border-l-transparent";
 }

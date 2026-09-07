@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
 import type { Tone } from "@/lib/types";
@@ -410,6 +411,40 @@ export function Stat({
   );
 }
 
+/**
+ * The page's totals, read at a glance rather than declaimed. Deliberately not a
+ * StatBand: this sits beside tabs or a header, so the figures stay at body size
+ * in the sans and let the table below them be the loud thing.
+ */
+export function StatInline({
+  items,
+  className,
+}: {
+  items: Array<{ label: string; value: ReactNode; hint?: ReactNode; tone?: Tone }>;
+  className?: string;
+}) {
+  return (
+    <dl className={cn("flex flex-wrap items-center gap-x-8 gap-y-2 text-body", className)}>
+      {items.map((item) => (
+        <div key={item.label} className="flex flex-col gap-0.5">
+          <dt className="text-meta tracking-wide text-ink-subtle">{item.label}</dt>
+          <dd
+            className={cn(
+              "flex items-baseline gap-1.5 font-medium tabular-nums",
+              TONE_FIGURE[item.tone ?? "neutral"],
+            )}
+          >
+            {item.value}
+            {item.hint ? (
+              <span className="text-meta font-normal opacity-80">{item.hint}</span>
+            ) : null}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 // --- Button -----------------------------------------------------------------
 
 /**
@@ -419,11 +454,103 @@ export function Stat({
  */
 export function ActionStyle({
   variant = "primary",
-}: { variant?: "primary" | "ghost" } = {}): string {
+}: { variant?: "primary" | "ghost" | "quiet" } = {}): string {
   return cn(
     "inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-body font-medium transition",
-    variant === "primary"
-      ? "bg-accent text-on-accent hover:bg-accent-hover"
-      : "border border-line-strong text-ink hover:bg-sunken",
+    variant === "primary" && "bg-accent text-on-accent hover:bg-accent-hover",
+    variant === "ghost" && "border border-line-strong text-ink hover:bg-sunken",
+    variant === "quiet" && "text-ink-muted hover:bg-sunken hover:text-ink",
+  );
+}
+
+/**
+ * The way back up one level. A drawn chevron in a square hit area, not a "←"
+ * glyph on a text baseline: the glyph sat a hair below the title it preceded,
+ * had no target to speak of, and rendered at a different weight in every font
+ * that happened to be installed.
+ */
+export function BackLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      aria-label={label}
+      title={label}
+      className="-ml-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition hover:bg-sunken hover:text-ink"
+    >
+      <svg
+        aria-hidden
+        viewBox="0 0 16 16"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className="size-4"
+      >
+        <path d="M10 3.5 5.5 8l4.5 4.5" />
+      </svg>
+    </Link>
+  );
+}
+
+// --- Form -------------------------------------------------------------------
+
+/** Every text field on the product, so a modal and a toolbar agree on height. */
+export function FieldStyle(): string {
+  return "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-body text-ink outline-none transition placeholder:text-ink-subtle focus:border-accent";
+}
+
+export function Field({
+  label,
+  htmlFor,
+  count,
+  children,
+}: {
+  label: string;
+  htmlFor: string;
+  /** A live length against its cap, for capped fields. */
+  count?: string;
+  children: ReactNode;
+}) {
+  return (
+    <div>
+      <div className="flex items-baseline justify-between gap-3">
+        <label className="text-meta font-medium tracking-wide text-ink-muted" htmlFor={htmlFor}>
+          {label}
+        </label>
+        {count ? <span className="text-meta tabular-nums text-ink-subtle">{count}</span> : null}
+      </div>
+      <div className="mt-1.5">{children}</div>
+    </div>
+  );
+}
+
+/** A checkbox with its explanation, as one target. */
+export function CheckField({
+  checked,
+  onChange,
+  label,
+  children,
+}: {
+  checked: boolean;
+  onChange: (next: boolean) => void;
+  label: string;
+  children?: ReactNode;
+}) {
+  return (
+    <label className="flex cursor-pointer items-start gap-2.5 rounded-md border border-line bg-sunken px-3 py-2.5 transition hover:border-line-strong">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(e) => onChange(e.target.checked)}
+        className="mt-0.5 size-4 shrink-0 accent-accent"
+      />
+      <span className="text-body text-ink">
+        {label}
+        {children ? (
+          <span className="mt-1 block text-detail leading-relaxed text-ink-muted">{children}</span>
+        ) : null}
+      </span>
+    </label>
   );
 }

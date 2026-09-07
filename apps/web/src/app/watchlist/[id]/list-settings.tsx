@@ -4,13 +4,15 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { ActionStyle } from "@/components/ui/primitives";
 import { Modal } from "@/components/ui/modal";
+import { cn } from "@/lib/format";
 import { deleteList, updateList } from "@/lib/watchlist/actions";
 import type { WatchlistSummary } from "@/lib/watchlist/types";
+import { BasketFields, type BasketDraft } from "../basket-fields";
 
 /**
  * A modal, not an inline panel — editing a basket shares its field set with
- * creating one (name, description, visibility), and a panel here would
- * reflow the holdings table the owner was just reading.
+ * creating one, and a panel here would reflow the holdings table the owner
+ * was just reading.
  */
 export function ListSettings({ list }: { list: WatchlistSummary }) {
   const [open, setOpen] = useState(false);
@@ -35,9 +37,11 @@ export function ListSettings({ list }: { list: WatchlistSummary }) {
 function SettingsForm({ list, onClose }: { list: WatchlistSummary; onClose: () => void }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [name, setName] = useState(list.name);
-  const [description, setDescription] = useState(list.description ?? "");
-  const [isPublic, setIsPublic] = useState(list.visibility === "public");
+  const [draft, setDraft] = useState<BasketDraft>({
+    name: list.name,
+    description: list.description ?? "",
+    isPublic: list.visibility === "public",
+  });
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -46,9 +50,9 @@ function SettingsForm({ list, onClose }: { list: WatchlistSummary; onClose: () =
     setError(null);
     startTransition(async () => {
       const result = await updateList(list.id, {
-        name,
-        description,
-        visibility: isPublic ? "public" : "private",
+        name: draft.name,
+        description: draft.description,
+        visibility: draft.isPublic ? "public" : "private",
       });
       if (result.status === "error") setError(result.error);
       else {
@@ -69,60 +73,37 @@ function SettingsForm({ list, onClose }: { list: WatchlistSummary; onClose: () =
   }
 
   return (
-    <form onSubmit={onSave} className="flex flex-col gap-4 px-6 py-5">
-      <div>
-        <label className="text-detail text-ink-muted" htmlFor="settings-name">
-          Name
-        </label>
-        <input
-          id="settings-name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          maxLength={80}
-          autoFocus
-          className="mt-1 w-full rounded-md border border-line-strong bg-canvas px-3 py-2 text-body text-ink outline-none focus:border-accent"
-        />
-      </div>
-      <div>
-        <div className="flex items-baseline justify-between">
-          <label className="text-detail text-ink-muted" htmlFor="settings-description">
-            Description
-          </label>
-          <span className="text-meta text-ink-subtle">{description.length}/200</span>
-        </div>
-        <input
-          id="settings-description"
-          value={description}
-          onChange={(e) => setDescription(e.target.value.slice(0, 200))}
-          maxLength={200}
-          className="mt-1 w-full rounded-md border border-line-strong bg-canvas px-3 py-2 text-body text-ink outline-none focus:border-accent"
-        />
-      </div>
-      <label className="flex items-start gap-2 text-body text-ink">
-        <input
-          type="checkbox"
-          checked={isPublic}
-          onChange={(e) => setIsPublic(e.target.checked)}
-          className="mt-1"
-        />
-        <span>
-          Make this list public
-          <span className="mt-0.5 block text-detail text-ink-muted">
-            Private lists are visible only to you; public lists can be opened by anyone signed
-            in.
-          </span>
-        </span>
-      </label>
+    <form onSubmit={onSave} className="flex flex-col gap-5 px-6 py-5">
+      <BasketFields idPrefix="settings" draft={draft} onChange={setDraft} />
       {error ? <p className="text-detail text-loss">{error}</p> : null}
-      <div className="flex items-center gap-3">
-        <button type="submit" disabled={pending} className={ActionStyle()}>
-          Save
-        </button>
+      {/* Save sits with Cancel; deleting the basket is held apart from both,
+          on the far side of the row, so it is never the button you reach for
+          by muscle memory. */}
+      <div className="flex items-center justify-between gap-3 border-t border-line pt-4">
+        <div className="flex items-center gap-2">
+          <button type="submit" disabled={pending} className={ActionStyle()}>
+            {pending ? "Saving…" : "Save"}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={pending}
+            className={ActionStyle({ variant: "quiet" })}
+          >
+            Cancel
+          </button>
+        </div>
         <button
           type="button"
           onClick={onDelete}
+          onBlur={() => setConfirmDelete(false)}
           disabled={pending}
-          className={ActionStyle({ variant: "ghost" })}
+          className={cn(
+            "rounded-md px-3 py-2 text-body font-medium transition",
+            confirmDelete
+              ? "bg-loss-soft text-loss"
+              : "text-ink-subtle hover:bg-loss-soft hover:text-loss",
+          )}
         >
           {confirmDelete ? "Really delete?" : "Delete basket"}
         </button>

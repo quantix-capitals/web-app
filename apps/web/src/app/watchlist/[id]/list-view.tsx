@@ -1,9 +1,17 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useTransition } from "react";
 import { IconWatchlist } from "@/components/shell/nav-icons";
-import { ActionStyle, Badge, EmptyState, Section, Stat, StatBand } from "@/components/ui/primitives";
+import {
+  ActionStyle,
+  BackLink,
+  Badge,
+  EmptyState,
+  Section,
+  Stat,
+  StatBand,
+} from "@/components/ui/primitives";
+import { HeadRow, RowAction, Sub, Table, Td, Th, Tr } from "@/components/ui/table";
 import { cn, formatDate, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
 import { toYahooSymbol } from "@/lib/market/symbols";
 import { useQuotes } from "@/lib/market/use-quotes";
@@ -28,28 +36,26 @@ export function ListView({ list }: { list: WatchlistSummary }) {
   // came back empty, or it errored are three different facts that all sat
   // behind the same dash before this.
   const loadingPrices = status === "loading" && totals.pricedCount === 0;
+  const priced = (value: number | null, signed = false) =>
+    value === null ? (loadingPrices ? "Loading…" : "—") : formatMoney(value, signed);
 
   return (
     <div className="bg-canvas">
-      {/* The back link shares the header's first line rather than owning a row
-          of its own above it — one line of chrome, not two. */}
-      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line px-6 py-4">
+      {/* The back control shares the header's first line rather than owning a
+          row of its own above it — one line of chrome, not two. */}
+      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line px-6 py-5">
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <Link
-              href="/watchlist"
-              className="text-detail text-ink-subtle hover:text-ink"
-              aria-label="Back to watchlist"
-            >
-              ←
-            </Link>
+          <div className="flex items-center gap-2.5">
+            <BackLink href="/watchlist" label="Back to watchlist" />
             <h1 className="truncate font-serif text-title tracking-tight text-ink">{list.name}</h1>
             <Badge tone={list.visibility === "public" ? "accent" : "neutral"}>
               {list.visibility === "public" ? "Public" : "Private"}
             </Badge>
             {list.createdBy === "agent" ? <Badge tone="info">Agent</Badge> : null}
           </div>
-          <p className="mt-1 text-meta text-ink-muted">
+          {/* Indented to the title, not to the chevron, so the two lines of the
+              header share one left edge. */}
+          <p className="mt-1.5 pl-8 text-meta text-ink-muted">
             Struck {struck} · modified {formatRelative(list.updatedAt)}
             {list.description ? ` · ${list.description}` : ""}
           </p>
@@ -59,10 +65,8 @@ export function ListView({ list }: { list: WatchlistSummary }) {
             <button
               type="button"
               onClick={() => refresh()}
-              className={cn(
-                ActionStyle({ variant: "ghost" }),
-                status === "loading" && "opacity-60",
-              )}
+              disabled={status === "loading"}
+              className={cn(ActionStyle({ variant: "ghost" }), status === "loading" && "opacity-60")}
             >
               {status === "loading" ? "Refreshing…" : "Refresh"}
             </button>
@@ -75,50 +79,23 @@ export function ListView({ list }: { list: WatchlistSummary }) {
         <StatBand>
           <Stat
             label="Total value"
-            value={
-              totals.marketValue === null
-                ? loadingPrices
-                  ? "Loading…"
-                  : "—"
-                : formatMoney(totals.marketValue)
-            }
+            value={priced(totals.marketValue)}
             hint={
               totals.pricedCount > 0 && totals.pricedCount < totals.count
                 ? `${totals.pricedCount} of ${totals.count} priced`
                 : undefined
             }
           />
-          <Stat
-            label="Invested"
-            value={
-              totals.invested === null
-                ? loadingPrices
-                  ? "Loading…"
-                  : "—"
-                : formatMoney(totals.invested)
-            }
-          />
+          <Stat label="Invested" value={priced(totals.invested)} />
           <Stat
             label={`P&L since ${struck}`}
-            value={
-              totals.unrealised === null
-                ? loadingPrices
-                  ? "Loading…"
-                  : "—"
-                : formatMoney(totals.unrealised, true)
-            }
+            value={priced(totals.unrealised, true)}
             hint={totals.returnPct !== null ? formatPercent(totals.returnPct) : undefined}
             tone={totals.unrealised === null ? "neutral" : moveTone(totals.unrealised)}
           />
           <Stat
             label="Day change"
-            value={
-              totals.dayChange === null
-                ? loadingPrices
-                  ? "Loading…"
-                  : "—"
-                : formatMoney(totals.dayChange, true)
-            }
+            value={priced(totals.dayChange, true)}
             tone={totals.dayChange === null ? "neutral" : moveTone(totals.dayChange)}
           />
         </StatBand>
@@ -190,40 +167,38 @@ function ItemsTable({
   isOwner: boolean;
 }) {
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-220 border-collapse text-body">
-        <thead>
-          <tr className="border-b border-line bg-sunken text-meta text-ink-muted">
-            <th className="px-3 py-2.5 pl-6 text-left font-medium">Symbol</th>
-            <th className="px-3 py-2.5 text-right font-medium">Qty</th>
-            <th className="px-3 py-2.5 text-right font-medium">Entry</th>
-            <th className="px-3 py-2.5 text-right font-medium">Entry date</th>
-            <th className="px-3 py-2.5 text-right font-medium">Last</th>
-            <th className="px-3 py-2.5 text-right font-medium">Value</th>
-            <th className="px-3 py-2.5 text-right font-medium">P&L</th>
-            {isOwner ? (
-              <th className="px-3 py-2.5 pr-6 text-right font-medium">
-                <span className="sr-only">Actions</span>
-              </th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <ItemRow
-              key={item.id}
-              item={item}
-              quotes={quotes}
-              status={status}
-              missing={missing}
-              onRetry={onRetry}
-              listId={listId}
-              isOwner={isOwner}
-            />
-          ))}
-        </tbody>
-      </table>
-    </div>
+    <Table>
+      <HeadRow>
+        <Th align="left" first>
+          Symbol
+        </Th>
+        <Th>Qty</Th>
+        <Th>Entry</Th>
+        <Th>Entry date</Th>
+        <Th>Last</Th>
+        <Th>Value</Th>
+        <Th>P&L</Th>
+        {isOwner ? (
+          <Th last srOnly>
+            Actions
+          </Th>
+        ) : null}
+      </HeadRow>
+      <tbody>
+        {items.map((item) => (
+          <ItemRow
+            key={item.id}
+            item={item}
+            quotes={quotes}
+            status={status}
+            missing={missing}
+            onRetry={onRetry}
+            listId={listId}
+            isOwner={isOwner}
+          />
+        ))}
+      </tbody>
+    </Table>
   );
 }
 
@@ -275,41 +250,29 @@ function ItemRow({
   }
 
   return (
-    <tr
-      className={cn(
-        "border-b border-line last:border-b-0 odd:bg-sunken/60 hover:bg-accent-soft/40",
-        pending && "opacity-50",
-      )}
-    >
-      <td className={cn("px-3 py-3 pl-6 text-left border-l-2", rowAccentBorder(pnl.unrealised))}>
+    <Tr dimmed={pending}>
+      <Td align="left" first>
         <div className="flex items-center gap-2">
           <span className="font-mono font-medium text-ink">{item.symbol}</span>
           <Badge mono>{item.exchange}</Badge>
         </div>
-        {item.name ? <div className="mt-0.5 text-meta text-ink-subtle">{item.name}</div> : null}
-      </td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">{item.quantity}</td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
+        {item.name ? <Sub>{item.name}</Sub> : null}
+      </Td>
+      <Td className="text-ink-muted">{item.quantity}</Td>
+      <Td className="text-ink-muted">
         {item.entryPrice === null ? "—" : formatMoney(item.entryPrice)}
-      </td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        {item.entryAt ? formatDate(item.entryAt) : "—"}
-      </td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink-muted">
-        {quote ? formatMoney(quote.price) : priceCell}
-      </td>
-      <td className="px-3 py-3 text-right tabular-nums text-ink">
+      </Td>
+      <Td className="text-ink-muted">{item.entryAt ? formatDate(item.entryAt) : "—"}</Td>
+      <Td className="text-ink-muted">{quote ? formatMoney(quote.price) : priceCell}</Td>
+      <Td className="text-ink">
         {pnl.marketValue === null ? priceCell : formatMoney(pnl.marketValue)}
-      </td>
-      <td
-        className={cn(
-          "px-3 py-3 text-right tabular-nums",
-          pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised),
-        )}
-      >
+      </Td>
+      <Td className={pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised)}>
         {pnl.unrealised === null ? priceCell : formatMoney(pnl.unrealised, true)}
         {pnl.returnPct !== null ? (
-          <div className="mt-0.5 text-meta opacity-80">{formatPercent(pnl.returnPct)}</div>
+          <Sub className={cn("opacity-80", moveTextClass(pnl.unrealised ?? 0))}>
+            {formatPercent(pnl.returnPct)}
+          </Sub>
         ) : null}
         {!hasBaseline && isOwner ? (
           <button
@@ -330,32 +293,19 @@ function ItemRow({
             Price unavailable — retry
           </button>
         ) : null}
-      </td>
+      </Td>
       {isOwner ? (
-        <td className="px-3 py-3 pr-6 text-right">
-          <button
-            type="button"
-            onClick={onRemove}
-            disabled={pending}
-            className="text-meta text-ink-subtle hover:text-loss"
-          >
+        <Td last>
+          <RowAction danger onClick={onRemove} disabled={pending}>
             Remove
-          </button>
-        </td>
+          </RowAction>
+        </Td>
       ) : null}
-    </tr>
+    </Tr>
   );
 }
 
 function moveTextClass(n: number): string {
   const tone = moveTone(n);
   return tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
-}
-
-/** A row's direction, as a 2px rule on its identity cell — legible before the
- * digits are. */
-function rowAccentBorder(n: number | null): string {
-  if (n === null) return "border-l-transparent";
-  const tone = moveTone(n);
-  return tone === "gain" ? "border-l-gain" : tone === "loss" ? "border-l-loss" : "border-l-transparent";
 }

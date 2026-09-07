@@ -132,7 +132,7 @@ export function AddSymbol({ listId }: { listId: string }) {
   return (
     <form
       onSubmit={onSubmit}
-      className="flex flex-wrap items-center gap-x-2 gap-y-2 border-b border-line px-6 py-3"
+      className="flex flex-wrap items-center gap-2 border-b border-line bg-sunken px-6 py-3"
     >
       <div className="relative w-full max-w-sm">
         <SearchIcon />
@@ -163,9 +163,19 @@ export function AddSymbol({ listId }: { listId: string }) {
             type="button"
             onClick={clear}
             aria-label="Clear symbol"
-            className="absolute top-1/2 right-2 -translate-y-1/2 text-meta text-ink-subtle hover:text-ink"
+            className="absolute top-1/2 right-1.5 inline-flex size-6 -translate-y-1/2 items-center justify-center rounded-md text-ink-subtle transition hover:bg-sunken hover:text-ink"
           >
-            ✕
+            <svg
+              aria-hidden
+              viewBox="0 0 16 16"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              className="size-3"
+            >
+              <path d="m4 4 8 8M12 4l-8 8" />
+            </svg>
           </button>
         ) : null}
 
