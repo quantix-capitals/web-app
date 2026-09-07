@@ -1,17 +1,13 @@
-"use client";
-
-import dynamic from "next/dynamic";
 import type { ReactNode } from "react";
 import { Dot } from "@/components/ui/primitives";
 
-// three.js is dead weight until the hero paints — and it needs a DOM, so no SSR pass.
-const HeroCanvas = dynamic(() => import("./hero-canvas").then((m) => m.HeroCanvas), {
-  ssr: false,
-});
-
 /**
- * The band at the top of the desk. The canvas dissolves at every edge (see
- * `.hero-webgl`) so the type below sits on flat ground.
+ * The band at the top of the desk. Deliberately the same height as the
+ * `PageHeader` every other route wears — this is a console, and a screen-height
+ * centred splash pushes the first real figure below the fold.
+ *
+ * The WebGL activation band and the pulsing status dot are both parked for now;
+ * `hero-canvas.tsx` stays on disk unimported so the band can come back.
  */
 export function Hero({
   eyebrow,
@@ -27,25 +23,24 @@ export function Hero({
   return (
     <div className="relative isolate overflow-hidden border-b border-base-850">
       <div aria-hidden className="grid-fade absolute inset-0 -z-20" />
-      <HeroCanvas className="hero-webgl pointer-events-none absolute top-0 left-1/2 -z-10 h-[150px] w-[min(1100px,124vw)] -translate-x-1/2 sm:h-[190px]" />
 
-      <div className="px-6 py-14 text-center sm:py-20">
-        {eyebrow ? (
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-base-800 bg-base-950/60 px-2.5 py-1 text-meta text-base-400 backdrop-blur">
-            <Dot tone="ember" pulse />
-            {eyebrow}
-          </div>
-        ) : null}
-        <h1 className="mx-auto max-w-[22ch] text-2xl font-semibold tracking-tight text-base-100 text-balance sm:text-3xl">
-          {title}
-        </h1>
-        {children ? (
-          <p className="mx-auto mt-3 max-w-[58ch] text-body leading-relaxed text-base-500 text-pretty">
-            {children}
-          </p>
-        ) : null}
+      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 px-6 py-5">
+        <div className="min-w-0">
+          <h1 className="text-lead font-semibold tracking-tight text-base-100">{title}</h1>
+          {children ? (
+            <p className="mt-1 max-w-[70ch] text-detail leading-relaxed text-base-500">
+              {children}
+            </p>
+          ) : null}
+          {eyebrow ? (
+            <div className="mt-2 inline-flex items-center gap-1.5 text-meta text-base-500">
+              <Dot tone="ember" />
+              {eyebrow}
+            </div>
+          ) : null}
+        </div>
         {actions ? (
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-2">{actions}</div>
+          <div className="flex flex-wrap items-center gap-2">{actions}</div>
         ) : null}
       </div>
     </div>
