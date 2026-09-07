@@ -6,7 +6,7 @@ import { Dot } from "@/components/ui/primitives";
  * `PageHeader` every other route wears — this is a console, and a screen-height
  * centred splash pushes the first real figure below the fold.
  *
- * The WebGL activation band and the pulsing status dot are both parked for now;
+ * The WebGL activation band and the pulsing status dot are both parked;
  * `hero-canvas.tsx` stays on disk unimported so the band can come back.
  */
 export function Hero({
@@ -21,20 +21,18 @@ export function Hero({
   actions?: ReactNode;
 }) {
   return (
-    <div className="relative isolate overflow-hidden border-b border-base-850">
-      <div aria-hidden className="grid-fade absolute inset-0 -z-20" />
-
-      <div className="flex flex-wrap items-center justify-between gap-x-8 gap-y-4 px-6 py-5">
+    <div className="border-b border-line bg-sunken">
+      <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-4 px-6 py-6">
         <div className="min-w-0">
-          <h1 className="text-lead font-semibold tracking-tight text-base-100">{title}</h1>
+          <h1 className="font-serif text-title tracking-tight text-ink">{title}</h1>
           {children ? (
-            <p className="mt-1 max-w-[70ch] text-detail leading-relaxed text-base-500">
+            <p className="mt-1.5 max-w-[70ch] text-detail leading-relaxed text-ink-muted">
               {children}
             </p>
           ) : null}
           {eyebrow ? (
-            <div className="mt-2 inline-flex items-center gap-1.5 text-meta text-base-500">
-              <Dot tone="ember" />
+            <div className="mt-2.5 inline-flex items-center gap-2 text-meta text-ink-subtle">
+              <Dot tone="accent" />
               {eyebrow}
             </div>
           ) : null}

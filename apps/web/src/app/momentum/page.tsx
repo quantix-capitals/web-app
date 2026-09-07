@@ -19,7 +19,7 @@ export const metadata = { title: "Momentum — Stealth Mode" };
  */
 export default function MomentumPage() {
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <PageHeader
         title="Momentum analysis"
         subtitle="Rank a universe on momentum, and read the agent's case for each name it surfaces."
@@ -39,7 +39,7 @@ export default function MomentumPage() {
         />
         <Empty inline>
           The agent service is not connected yet. Point{" "}
-          <code className="font-mono text-base-400">NEXT_PUBLIC_AGENT_URL</code> at it and
+          <code className="font-mono text-ink-muted">NEXT_PUBLIC_AGENT_URL</code> at it and
           this section fills with the ranking as it streams.
         </Empty>
       </Section>

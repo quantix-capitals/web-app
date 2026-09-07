@@ -3,7 +3,7 @@ import { ActionStyle, EmptyState } from "@/components/ui/primitives";
 
 export default function NotFound() {
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <EmptyState
         title="No such page"
         action={

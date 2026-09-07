@@ -64,7 +64,7 @@ function Callback() {
 
   if (error) {
     return (
-      <div className="console-ground">
+      <div className="bg-canvas">
         <Section flush>
           <EmptyState
             title="Zerodha connection failed"
@@ -86,7 +86,7 @@ function Callback() {
 
 function Working() {
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <Section flush>
         <EmptyState title="Connecting to Zerodha">
           Finishing the handshake and reading your holdings. This takes a second.
