@@ -1,7 +1,7 @@
 "use client";
 
 import { useSearchParams } from "next/navigation";
-import { Suspense, useEffect } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { PageHeader } from "@/components/shell/page-header";
 import { IconPortfolio } from "@/components/shell/nav-icons";
 import {
@@ -15,7 +15,12 @@ import {
 } from "@/components/ui/primitives";
 import { ConnectZerodhaButton } from "@/components/zerodha/connect-button";
 import { cn, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
-import { summarise, type KiteHolding } from "@/lib/zerodha/types";
+import {
+  summarise,
+  summariseMf,
+  type KiteHolding,
+  type KiteMfHolding,
+} from "@/lib/zerodha/types";
 import { useZerodha } from "@/lib/zerodha/use-connection";
 
 /**
@@ -32,8 +37,9 @@ export function HoldingsView() {
 }
 
 function Book() {
-  const { connection, connected, syncing, error, expired, refresh, disconnect } =
+  const { connection, connected, syncing, error, expired, mfError, refresh, disconnect } =
     useZerodha();
+  const [tab, setTab] = useState<TabId>("equity");
   // Set by `/api/zerodha/login` when the Kite keys are missing from the env.
   const notConfigured = useSearchParams().get("zerodha") === "not-configured";
 
@@ -80,8 +86,14 @@ function Book() {
   }
 
   const holdings = connection?.holdings ?? [];
-  const totals = summarise(holdings);
+  const mfHoldings = connection?.mf_holdings ?? [];
+
+  const equityTotals = summarise(holdings);
+  const mfTotals = summariseMf(mfHoldings);
+  const totals = tab === "equity" ? equityTotals : mfTotals;
   const investedPct = totals.invested ? totals.unrealised / totals.invested : 0;
+  // The whole book, so switching tabs never hides what everything is worth.
+  const bookValue = equityTotals.marketValue + mfTotals.marketValue;
 
   return (
     <div className="console-ground">
@@ -93,6 +105,8 @@ function Book() {
             <span className="text-base-300">
               {connection?.session.user_name ?? connection?.session.user_id}
             </span>
+            {" · book "}
+            <span className="text-base-300 tabular-nums">{formatMoney(bookValue)}</span>
             {connection?.synced_at ? ` · synced ${formatRelative(connection.synced_at)}` : null}
           </>
         }
@@ -129,6 +143,17 @@ function Book() {
       ) : null}
 
       <Section>
+        <Tabs
+          active={tab}
+          onChange={setTab}
+          tabs={[
+            { id: "equity", label: "Equity", count: equityTotals.count },
+            { id: "mf", label: "Mutual funds", count: mfTotals.count },
+          ]}
+        />
+      </Section>
+
+      <Section>
         <StatBand>
           <Stat label="Market value" value={formatMoney(totals.marketValue)} />
           <Stat
@@ -142,28 +167,103 @@ function Book() {
             hint={formatPercent(investedPct)}
             tone={moveTone(totals.unrealised)}
           />
+          {/* A fund has no intraday mark, so the slot holds an em-dash rather than
+              a zero that would read as "flat today". */}
           <Stat
             label="Day change"
-            value={formatMoney(totals.dayChange)}
-            hint="Against the previous close"
-            tone={moveTone(totals.dayChange)}
+            value={totals.dayChange === null ? "—" : formatMoney(totals.dayChange)}
+            hint={
+              totals.dayChange === null
+                ? "Funds are priced once a day"
+                : "Against the previous close"
+            }
+            tone={totals.dayChange === null ? "neutral" : moveTone(totals.dayChange)}
           />
         </StatBand>
       </Section>
 
       <Section flush>
-        <SectionHeader
-          title="Holdings"
-          subtitle={`${totals.count} ${totals.count === 1 ? "position" : "positions"} held at Zerodha.`}
-        />
-        {holdings.length ? (
-          <HoldingsTable holdings={holdings} />
+        {tab === "equity" ? (
+          <>
+            <SectionHeader
+              title="Equity holdings"
+              subtitle={`${equityTotals.count} ${equityTotals.count === 1 ? "position" : "positions"} held at Zerodha.`}
+            />
+            {holdings.length ? (
+              <HoldingsTable holdings={holdings} />
+            ) : (
+              <EmptyState icon={<IconPortfolio className="size-5" />} title="Nothing held">
+                Zerodha reports no equity holdings on this account.
+              </EmptyState>
+            )}
+          </>
         ) : (
-          <EmptyState icon={<IconPortfolio className="size-5" />} title="Nothing held">
-            Zerodha reports no holdings on this account.
-          </EmptyState>
+          <>
+            <SectionHeader
+              title="Mutual funds"
+              subtitle={`${mfTotals.count} ${mfTotals.count === 1 ? "fund" : "funds"} held through Coin.`}
+            />
+            {mfError ? (
+              <div className="px-6 py-3 text-detail text-warn-500">
+                Equity loaded, but Zerodha did not return mutual funds: {mfError}
+              </div>
+            ) : null}
+            {mfHoldings.length ? (
+              <MfTable holdings={mfHoldings} />
+            ) : (
+              <EmptyState icon={<IconPortfolio className="size-5" />} title="No funds held">
+                Zerodha reports no mutual fund holdings on this account.
+              </EmptyState>
+            )}
+          </>
         )}
       </Section>
+    </div>
+  );
+}
+
+// --- Tabs -------------------------------------------------------------------
+
+type TabId = "equity" | "mf";
+
+/**
+ * Two views of the same book. A tab strip rather than a switch: these are peers,
+ * not an on/off state, and there is room for a third asset class later.
+ */
+function Tabs({
+  active,
+  onChange,
+  tabs,
+}: {
+  active: TabId;
+  onChange: (id: TabId) => void;
+  tabs: Array<{ id: TabId; label: string; count: number }>;
+}) {
+  return (
+    <div role="tablist" className="flex items-center gap-1 px-6 py-2">
+      {tabs.map((t) => {
+        const on = t.id === active;
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            aria-selected={on}
+            type="button"
+            onClick={() => onChange(t.id)}
+            className={cn(
+              "flex items-center gap-2 rounded-md px-3 py-1.5 text-body font-medium transition",
+              on
+                ? "bg-base-850 text-base-100"
+                : "text-base-500 hover:bg-base-900 hover:text-base-300",
+            )}
+          >
+            {t.label}
+            <Badge tone={on ? "ember" : "neutral"} mono>
+              {t.count}
+            </Badge>
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -217,6 +317,56 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
               </tr>
             );
           })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
+ * Funds, biggest first. Different columns from equity on purpose: units carry
+ * fractions, the price is a NAV, and there is no intraday move to show.
+ */
+function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
+  const rows = [...holdings].sort(
+    (a, b) => b.quantity * b.last_price - a.quantity * a.last_price,
+  );
+
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[720px] border-collapse text-body">
+        <thead>
+          <tr className="border-b border-base-850 text-meta uppercase tracking-[0.08em] text-base-500">
+            <Th className="text-left">Fund</Th>
+            <Th>Units</Th>
+            <Th>Avg NAV</Th>
+            <Th>Last NAV</Th>
+            <Th>Value</Th>
+            <Th>P&L</Th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((h) => (
+            <tr
+              key={`${h.folio ?? "—"}:${h.tradingsymbol}`}
+              className="border-b border-base-850 last:border-b-0 hover:bg-base-900/60"
+            >
+              <Td className="text-left">
+                <div className="max-w-[42ch] font-medium text-base-100">{h.fund}</div>
+                {h.folio ? (
+                  <div className="mt-0.5 font-mono text-meta text-base-600">
+                    Folio {h.folio}
+                  </div>
+                ) : null}
+              </Td>
+              {/* Units are fractional — a fund sells you ₹5,000 worth, not 3 units. */}
+              <Td>{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 3 })}</Td>
+              <Td>{formatMoney(h.average_price)}</Td>
+              <Td>{formatMoney(h.last_price)}</Td>
+              <Td className="text-base-100">{formatMoney(h.quantity * h.last_price)}</Td>
+              <Td tone={moveTone(h.pnl)}>{formatMoney(h.pnl)}</Td>
+            </tr>
+          ))}
         </tbody>
       </table>
     </div>
