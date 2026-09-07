@@ -45,7 +45,19 @@ export interface KiteMfHolding {
   last_price: number;
   /** The date the NAV was struck — a fund's price is always stale by design. */
   last_price_date: string | null;
+  /**
+   * Kite sends this, but hands back 0 on folios bought through Coin. Read
+   * `mfUnrealised` instead — it is the same figure the totals are built from.
+   */
   pnl: number;
+}
+
+/**
+ * A fund's unrealised P&L, derived rather than read off `pnl`, so a row and the
+ * total above it can never disagree.
+ */
+export function mfUnrealised(h: KiteMfHolding): number {
+  return h.quantity * (h.last_price - h.average_price);
 }
 
 /**
