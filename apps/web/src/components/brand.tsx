@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import { cn } from "@/lib/format";
 
 /**
@@ -40,7 +40,7 @@ export function Wordmark({
 }) {
   return (
     <Link
-      href={href}
+      to={href}
       className="group flex min-w-0 items-center gap-2.5"
       aria-label="Stealth — home"
     >

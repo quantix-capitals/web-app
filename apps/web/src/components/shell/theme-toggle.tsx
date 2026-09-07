@@ -1,9 +1,6 @@
-"use client";
-
 import { useSyncExternalStore } from "react";
 import { cn } from "@/lib/format";
 import {
-  getServerSnapshot,
   getSnapshot,
   setTheme,
   subscribe,
@@ -22,7 +19,7 @@ const OPTIONS: Array<{ value: Theme; label: string; icon: () => React.ReactNode 
 ];
 
 export function ThemeToggle() {
-  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const theme = useSyncExternalStore(subscribe, getSnapshot);
 
   return (
     <div

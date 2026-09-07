@@ -1,13 +1,12 @@
-"use client";
-
 import { ActionStyle } from "@/components/ui/primitives";
 import { cn } from "@/lib/format";
+import { loginUrl } from "@/services/zerodha-service";
 
 /**
  * The whole connect flow, from the user's side: one click. The button is a plain
- * navigation to `/api/zerodha/login`, which redirects on to Zerodha — a full
- * page load rather than a fetch, because the OAuth handshake has to happen in the
- * address bar for the redirect back to work.
+ * navigation to the `zerodha` function's `?op=login`, which redirects on to
+ * Zerodha — a full page load rather than a fetch, because the OAuth handshake
+ * has to happen in the address bar for the redirect back to work.
  */
 export function ConnectZerodhaButton({
   variant = "primary",
@@ -19,7 +18,7 @@ export function ConnectZerodhaButton({
   className?: string;
 }) {
   return (
-    <a href="/api/zerodha/login" className={cn(ActionStyle({ variant }), className)}>
+    <a href={loginUrl()} className={cn(ActionStyle({ variant }), className)}>
       <KiteMark className="size-4" />
       {label}
     </a>

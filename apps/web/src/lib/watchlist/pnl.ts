@@ -4,8 +4,8 @@
  * "this row can't answer that" is a different fact from "flat".
  */
 
-import { toYahooSymbol } from "@/lib/market/symbols";
-import type { Quote, QuoteMap } from "@/lib/market/types";
+import { toYahooSymbol } from "@stealth/shared";
+import type { Quote, QuoteMap } from "@stealth/shared";
 import type { WatchlistItemView } from "./types";
 
 export interface ItemPnl {

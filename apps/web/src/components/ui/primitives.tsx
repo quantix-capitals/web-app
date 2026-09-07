@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
-import { googleFinanceUrl } from "@/lib/market/symbols";
+import { googleFinanceUrl } from "@stealth/shared";
 import type { Tone } from "@/lib/types";
 
 export type { Tone };
@@ -482,7 +482,7 @@ export function ActionStyle({
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
-      href={href}
+      to={href}
       aria-label={label}
       title={label}
       className="-ml-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition hover:bg-sunken hover:text-ink"
@@ -598,5 +598,20 @@ export function SymbolLink({
     >
       {children ?? symbol}
     </a>
+  );
+}
+
+/**
+ * What a route shows while its chunk or its first query is in flight.
+ *
+ * Deliberately not a spinner in the middle of an empty page: the shell is
+ * already drawn around this, so a quiet line on the page's own ground reads as
+ * "loading" without the layout jumping when the content lands.
+ */
+export function PageSpinner() {
+  return (
+    <div className="flex min-h-[40vh] items-center justify-center bg-canvas">
+      <span className="text-meta text-ink-subtle">Loading…</span>
+    </div>
   );
 }

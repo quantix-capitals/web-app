@@ -1,9 +1,7 @@
-"use client";
-
-import { useRouter, useSearchParams } from "next/navigation";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import { saveSession } from "./local-store";
-import type { KiteSession } from "./types";
+import { exchangeRequestToken } from "@/services/zerodha-service";
 
 /**
  * Completes a Kite login on whatever page Zerodha lands on.
@@ -20,8 +18,8 @@ import type { KiteSession } from "./types";
 export type CallbackStatus = "idle" | "working" | "done" | "error";
 
 export function useKiteCallback(): { status: CallbackStatus; error: string | null } {
-  const params = useSearchParams();
-  const router = useRouter();
+  const [params] = useSearchParams();
+  const navigate = useNavigate();
   const [status, setStatus] = useState<CallbackStatus>("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -48,29 +46,19 @@ export function useKiteCallback(): { status: CallbackStatus; error: string | nul
 
     (async () => {
       try {
-        const res = await fetch("/api/zerodha/session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ request_token: requestToken }),
-        });
-        const body = (await res.json()) as KiteSession & { error?: string };
-
-        if (!res.ok) {
-          setStatus("error");
-          setError(body.error ?? "Could not complete the connection.");
-          return;
-        }
-        saveSession(body);
+        saveSession(await exchangeRequestToken(requestToken));
         setStatus("done");
         // Drop the token from the address bar: it is spent, and leaving it there
         // means a refresh retries a dead token and shows a spurious failure.
-        router.replace("/portfolio");
-      } catch {
+        navigate("/portfolio", { replace: true });
+      } catch (err) {
         setStatus("error");
-        setError("Could not reach the server to finish connecting.");
+        setError(
+          err instanceof Error ? err.message : "Could not complete the connection.",
+        );
       }
     })();
-  }, [requestToken, kiteStatus, router]);
+  }, [requestToken, kiteStatus, navigate]);
 
   return { status, error };
 }

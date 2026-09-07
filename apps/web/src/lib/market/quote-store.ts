@@ -5,12 +5,13 @@
  * rate-limited. Every consumer instead retains the symbols it cares about
  * and reads from one poll of the union.
  *
- * Same shape as `lib/zerodha/local-store` — `subscribe` / `getSnapshot` /
- * `getServerSnapshot` for `useSyncExternalStore` — except this store isn't
- * persisted; it lives only as long as the tab does.
+ * Same shape as `lib/zerodha/local-store` — `subscribe` / `getSnapshot` for
+ * `useSyncExternalStore` — except this store isn't persisted; it lives only as
+ * long as the tab does.
  */
 
-import type { Quote, QuoteMap } from "./types";
+import type { QuoteMap } from "@stealth/shared";
+import { fetchQuotes } from "@/services/market-service";
 
 interface Snapshot {
   quotes: QuoteMap;
@@ -48,10 +49,6 @@ export function subscribe(cb: () => void): () => void {
 
 export function getSnapshot(): Snapshot {
   return snapshot;
-}
-
-export function getServerSnapshot(): Snapshot {
-  return EMPTY_SNAPSHOT;
 }
 
 function commit(next: Partial<Snapshot>) {
@@ -133,19 +130,7 @@ export async function refresh(): Promise<void> {
   try {
     const chunks = chunk(symbols, 100);
     const results = await Promise.all(
-      chunks.map((batch) =>
-        fetch(`/api/market/quotes?symbols=${encodeURIComponent(batch.join(","))}`, {
-          signal: controller.signal,
-        }).then(async (res) => {
-          const body = (await res.json()) as {
-            quotes?: Quote[];
-            missing?: string[];
-            error?: string;
-          };
-          if (!res.ok) throw new Error(body.error ?? `Quote request failed (${res.status})`);
-          return body;
-        }),
-      ),
+      chunks.map((batch) => fetchQuotes(batch, controller.signal)),
     );
 
     const nextQuotes: QuoteMap = { ...snapshot.quotes };

@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * The Zerodha connection, kept in localStorage. Deliberately local: nothing here
  * is written to Supabase yet, so a connection lives and dies in one browser.
@@ -14,7 +12,7 @@ import type {
   KiteMfHolding,
   KiteSession,
   ZerodhaConnection,
-} from "./types";
+} from "@stealth/shared";
 
 const KEY = "stealth:zerodha";
 
@@ -36,10 +34,6 @@ export function getSnapshot(): ZerodhaConnection | null {
   return cached;
 }
 
-/** Server render (and hydration) always starts disconnected. */
-export function getServerSnapshot(): ZerodhaConnection | null {
-  return null;
-}
 
 function read(): ZerodhaConnection | null {
   try {

@@ -1,14 +1,13 @@
-"use client";
-
 import { useCallback, useState, useSyncExternalStore } from "react";
 import {
   disconnect,
-  getServerSnapshot,
   getSnapshot,
   saveHoldings,
   subscribe,
 } from "./local-store";
-import type { KiteHolding, KiteMfHolding, ZerodhaConnection } from "./types";
+import type { ZerodhaConnection } from "@stealth/shared";
+import { FunctionError } from "@/services/functions";
+import { fetchHoldings } from "@/services/zerodha-service";
 
 export interface Connection {
   connection: ZerodhaConnection | null;
@@ -27,7 +26,7 @@ export interface Connection {
 
 /** Reads the stored connection and pulls holdings through the server proxy. */
 export function useZerodha(): Connection {
-  const connection = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const connection = useSyncExternalStore(subscribe, getSnapshot);
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
@@ -40,28 +39,15 @@ export function useZerodha(): Connection {
     setSyncing(true);
     setError(null);
     try {
-      const res = await fetch("/api/zerodha/holdings", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ access_token: token }),
-      });
-      const body = (await res.json()) as {
-        holdings?: KiteHolding[];
-        mfHoldings?: KiteMfHolding[];
-        mfError?: string | null;
-        error?: string;
-      };
-
-      if (!res.ok) {
-        setExpired(res.status === 401);
-        setError(body.error ?? "Could not load holdings.");
-        return;
-      }
+      const body = await fetchHoldings(token);
       setExpired(false);
-      setMfError(body.mfError ?? null);
-      saveHoldings(body.holdings ?? [], body.mfHoldings ?? []);
-    } catch {
-      setError("Could not reach the server.");
+      setMfError(body.mfError);
+      saveHoldings(body.holdings, body.mfHoldings);
+    } catch (err) {
+      // Kite expires every access token each morning, so a 401 here is the
+      // ordinary case: it means "reconnect", not "something broke".
+      setExpired(err instanceof FunctionError && err.status === 401);
+      setError(err instanceof Error ? err.message : "Could not load holdings.");
     } finally {
       setSyncing(false);
     }

@@ -1,19 +1,12 @@
-"use client";
+import { Link, useLocation } from "react-router-dom";
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Wordmark } from "@/components/brand";
 import { Dot } from "@/components/ui/primitives";
 import { cn } from "@/lib/format";
 import { IconAgent, IconChevron, IconMenu } from "./nav-icons";
 import { isActive, NAV, type NavItem } from "./nav";
-import {
-  getServerSnapshot,
-  getSnapshot,
-  setCollapsed,
-  subscribe,
-} from "./sidebar-store";
+import { getSnapshot, setCollapsed, subscribe } from "./sidebar-store";
 
 /**
  * The persistent chrome: a rail that collapses to icons and expands to labels,
@@ -23,8 +16,8 @@ import {
  * told apart by surface as well as by the rule between them.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const collapsed = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const { pathname } = useLocation();
+  const collapsed = useSyncExternalStore(subscribe, getSnapshot);
   const [drawer, setDrawer] = useState(false);
 
   const toggle = useCallback(() => setCollapsed(!getSnapshot()), []);
@@ -157,7 +150,7 @@ function SidebarBody({
         {collapsed ? (
           <div className="flex flex-col items-center gap-1.5">
             <Link
-              href="/momentum"
+              to="/momentum"
               title="Run a momentum scan"
               className="flex size-9 items-center justify-center rounded-md bg-accent text-on-accent transition hover:bg-accent-hover"
             >
@@ -177,7 +170,7 @@ function SidebarBody({
         ) : (
           <>
             <Link
-              href="/momentum"
+              to="/momentum"
               onClick={onNavigate}
               className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-body font-medium text-on-accent transition hover:bg-accent-hover"
             >
@@ -210,7 +203,7 @@ function NavLink({
   const Icon = item.icon;
   return (
     <Link
-      href={item.href}
+      to={item.href}
       onClick={onNavigate}
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}

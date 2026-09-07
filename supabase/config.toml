@@ -1,0 +1,12 @@
+project_id = "stealth-mode"
+
+[functions.market]
+# Yahoo has no CORS headers and `yahoo-finance2` is an npm package, so quotes
+# are fetched here. The function checks the caller itself (see _shared/http.ts):
+# Supabase's own gate accepts the anon key, which belongs to nobody.
+verify_jwt = false
+
+[functions.zerodha]
+# `?op=login` is a top-level browser redirect and cannot carry a bearer token,
+# so the JWT check happens per-op inside the function rather than at the edge.
+verify_jwt = false
