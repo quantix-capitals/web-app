@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { Hero } from "@/components/hero/hero";
 import { IconMomentum, IconPortfolio, IconWatchlist } from "@/components/shell/nav-icons";
+import { ConnectZerodhaButton } from "@/components/zerodha/connect-button";
 import {
   ActionStyle,
   Empty,
@@ -24,12 +25,10 @@ export default function OverviewPage() {
         title="Momentum, found and managed."
         actions={
           <>
-            <Link href="/momentum" className={ActionStyle()}>
+            <ConnectZerodhaButton />
+            <Link href="/momentum" className={ActionStyle({ variant: "ghost" })}>
               <IconMomentum className="size-4" />
               Run a momentum scan
-            </Link>
-            <Link href="/portfolio" className={ActionStyle({ variant: "ghost" })}>
-              Set up your portfolio
             </Link>
           </>
         }
@@ -55,7 +54,7 @@ export default function OverviewPage() {
               subtitle="The positions doing the most to today's number, in either direction."
             />
             <Empty inline>
-              No positions yet. Add holdings on{" "}
+              No positions yet. Connect Zerodha from{" "}
               <Link href="/portfolio" className="text-ember-400 hover:text-ember-300">
                 Portfolio
               </Link>{" "}
