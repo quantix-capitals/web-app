@@ -17,6 +17,7 @@ import {
 import { ConnectZerodhaButton } from "@/components/zerodha/connect-button";
 import { cn, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
 import {
+  mfUnrealised,
   summarise,
   summariseMf,
   type KiteHolding,
@@ -320,27 +321,39 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
           </tr>
         </thead>
         <tbody>
-          {rows.map((h) => (
-            <tr
-              key={`${h.folio ?? "—"}:${h.tradingsymbol}`}
-              className="border-b border-line last:border-b-0 hover:bg-sunken"
-            >
-              <Td left>
-                <div className="max-w-[42ch] font-medium text-ink">{h.fund}</div>
-                {h.folio ? (
-                  <div className="mt-0.5 font-mono text-meta text-ink-subtle">
-                    Folio {h.folio}
-                  </div>
-                ) : null}
-              </Td>
-              {/* Units are fractional — a fund sells you ₹5,000 worth, not 3 units. */}
-              <Td>{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 3 })}</Td>
-              <Td>{formatMoney(h.average_price)}</Td>
-              <Td>{formatMoney(h.last_price)}</Td>
-              <Td className="text-ink">{formatMoney(h.quantity * h.last_price)}</Td>
-              <Td tone={moveTone(h.pnl)}>{formatMoney(h.pnl)}</Td>
-            </tr>
-          ))}
+          {rows.map((h) => {
+            const pnl = mfUnrealised(h);
+            const invested = h.quantity * h.average_price;
+            return (
+              <tr
+                key={`${h.folio ?? "—"}:${h.tradingsymbol}`}
+                className="border-b border-line last:border-b-0 hover:bg-sunken"
+              >
+                <Td left>
+                  <div className="max-w-[42ch] font-medium text-ink">{h.fund}</div>
+                  {h.folio ? (
+                    <div className="mt-0.5 font-mono text-meta text-ink-subtle">
+                      Folio {h.folio}
+                    </div>
+                  ) : null}
+                </Td>
+                {/* Units are fractional — a fund sells you ₹5,000 worth, not 3 units. */}
+                <Td>{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 3 })}</Td>
+                <Td>{formatMoney(h.average_price)}</Td>
+                <Td>{formatMoney(h.last_price)}</Td>
+                <Td className="text-ink">{formatMoney(h.quantity * h.last_price)}</Td>
+                <Td tone={moveTone(pnl)}>
+                  {formatMoney(pnl)}
+                  {/* A return is only meaningful against what was put in. */}
+                  {invested > 0 ? (
+                    <div className="mt-0.5 text-meta opacity-80">
+                      {formatPercent(pnl / invested)}
+                    </div>
+                  ) : null}
+                </Td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
     </div>
