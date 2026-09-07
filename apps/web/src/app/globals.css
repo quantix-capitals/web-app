@@ -117,7 +117,7 @@
    enough to carry white text disappears against a dark ground.
    --------------------------------------------------------------------------- */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --color-canvas: oklch(0.192 0.008 260);
     --color-surface: oklch(0.232 0.009 260);
     --color-sunken: oklch(0.210 0.008 260);
@@ -152,6 +152,43 @@
   }
 }
 
+/* The same values again, keyed off the explicit choice so a reader who picks
+   dark on a light-set OS gets it (and the `:not([data-theme="light"])` above is
+   what lets them pick light on a dark-set OS). */
+:root[data-theme="dark"] {
+  --color-canvas: oklch(0.192 0.008 260);
+  --color-surface: oklch(0.232 0.009 260);
+  --color-sunken: oklch(0.210 0.008 260);
+  --color-line: oklch(0.298 0.010 260);
+  --color-line-strong: oklch(0.372 0.012 260);
+
+  --color-ink: oklch(0.955 0.004 260);
+  --color-ink-muted: oklch(0.735 0.008 260);
+  --color-ink-subtle: oklch(0.612 0.009 260);
+
+  /* Dark lifts the accent well past its light value — an evergreen that deep
+     disappears on a dark ground — and holds its chroma under `gain`'s so the
+     button still reads quieter than a profit figure beside it. */
+  --color-accent: oklch(0.728 0.088 172);
+  --color-accent-hover: oklch(0.796 0.078 174);
+  --color-accent-soft: oklch(0.302 0.040 172);
+  --color-accent-line: oklch(0.386 0.052 172);
+  --color-accent-ink: oklch(0.812 0.080 174);
+  --color-on-accent: oklch(0.190 0.022 172);
+
+  --color-gain: oklch(0.752 0.132 158);
+  --color-gain-soft: oklch(0.288 0.044 158);
+  --color-loss: oklch(0.702 0.166 24);
+  --color-loss-soft: oklch(0.296 0.056 24);
+  --color-warn: oklch(0.792 0.118 72);
+  --color-warn-soft: oklch(0.292 0.044 72);
+  --color-info: oklch(0.732 0.092 228);
+  --color-info-soft: oklch(0.288 0.040 228);
+
+  --shadow-card: 0 1px 2px oklch(0 0 0 / 0.24);
+  --shadow-lift: 0 4px 16px oklch(0 0 0 / 0.32);
+}
+
 @keyframes rise {
   from {
     opacity: 0;
@@ -165,6 +202,12 @@
 
 html {
   color-scheme: light dark;
+}
+html[data-theme="light"] {
+  color-scheme: light;
+}
+html[data-theme="dark"] {
+  color-scheme: dark;
 }
 
 body {

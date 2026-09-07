@@ -28,6 +28,9 @@ export async function sendMagicLink(
 }
 
 async function requestOrigin(): Promise<string> {
+  const configured = process.env.NEXT_PUBLIC_SITE_URL;
+  if (configured) return configured.replace(/\/$/, "");
+
   const h = await headers();
   const forwardedHost = h.get("x-forwarded-host");
   const forwardedProto = h.get("x-forwarded-proto") ?? "https";
