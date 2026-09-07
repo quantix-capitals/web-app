@@ -10,6 +10,7 @@ import {
   Section,
   Stat,
   StatBand,
+  SymbolLink,
 } from "@/components/ui/primitives";
 import { HeadRow, RowAction, Sub, Table, Td, Th, Tr } from "@/components/ui/table";
 import { cn, formatDate, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
@@ -169,17 +170,17 @@ function ItemsTable({
   return (
     <Table>
       <HeadRow>
-        <Th align="left" first>
+        <Th align="left" first grow>
           Symbol
         </Th>
-        <Th>Qty</Th>
-        <Th>Entry</Th>
-        <Th>Entry date</Th>
-        <Th>Last</Th>
-        <Th>Value</Th>
-        <Th>P&L</Th>
+        <Th tight>Qty</Th>
+        <Th tight>Entry</Th>
+        <Th tight>Entry date</Th>
+        <Th tight>Last</Th>
+        <Th tight>Value</Th>
+        <Th tight>P&L</Th>
         {isOwner ? (
-          <Th last srOnly>
+          <Th last tight srOnly>
             Actions
           </Th>
         ) : null}
@@ -251,23 +252,27 @@ function ItemRow({
 
   return (
     <Tr dimmed={pending}>
-      <Td align="left" first>
+      <Td align="left" first grow>
         <div className="flex items-center gap-2">
-          <span className="font-mono font-medium text-ink">{item.symbol}</span>
+          <SymbolLink
+            symbol={item.symbol}
+            exchange={item.exchange}
+            className="font-mono font-medium text-ink"
+          />
           <Badge mono>{item.exchange}</Badge>
         </div>
         {item.name ? <Sub>{item.name}</Sub> : null}
       </Td>
-      <Td className="text-ink-muted">{item.quantity}</Td>
-      <Td className="text-ink-muted">
+      <Td tight className="text-ink-muted">{item.quantity}</Td>
+      <Td tight className="text-ink-muted">
         {item.entryPrice === null ? "—" : formatMoney(item.entryPrice)}
       </Td>
-      <Td className="text-ink-muted">{item.entryAt ? formatDate(item.entryAt) : "—"}</Td>
-      <Td className="text-ink-muted">{quote ? formatMoney(quote.price) : priceCell}</Td>
-      <Td className="text-ink">
+      <Td tight className="text-ink-muted">{item.entryAt ? formatDate(item.entryAt) : "—"}</Td>
+      <Td tight className="text-ink-muted">{quote ? formatMoney(quote.price) : priceCell}</Td>
+      <Td tight className="text-ink">
         {pnl.marketValue === null ? priceCell : formatMoney(pnl.marketValue)}
       </Td>
-      <Td className={pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised)}>
+      <Td tight className={pnl.unrealised === null ? "text-ink-muted" : moveTextClass(pnl.unrealised)}>
         {pnl.unrealised === null ? priceCell : formatMoney(pnl.unrealised, true)}
         {pnl.returnPct !== null ? (
           <Sub className={cn("opacity-80", moveTextClass(pnl.unrealised ?? 0))}>
@@ -295,7 +300,7 @@ function ItemRow({
         ) : null}
       </Td>
       {isOwner ? (
-        <Td last>
+        <Td last tight>
           <RowAction danger onClick={onRemove} disabled={pending}>
             Remove
           </RowAction>

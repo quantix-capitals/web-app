@@ -13,6 +13,7 @@ import {
   SectionHeader,
   Stat,
   StatBand,
+  SymbolLink,
   Tabs,
 } from "@/components/ui/primitives";
 import { ConnectZerodhaButton } from "@/components/zerodha/connect-button";
@@ -325,7 +326,11 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
               >
                 <Td left accent={moveTone(h.pnl)}>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-ink">{h.tradingsymbol}</span>
+                    <SymbolLink
+                      symbol={h.tradingsymbol}
+                      exchange={h.exchange}
+                      className="font-medium text-ink"
+                    />
                     <Badge mono>{h.exchange}</Badge>
                     {h.t1_quantity > 0 ? <Badge tone="info">T1</Badge> : null}
                   </div>

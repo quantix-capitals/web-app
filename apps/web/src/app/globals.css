@@ -244,8 +244,17 @@ table {
 /* Text-like inputs (and any select/textarea) draw their own focus border via
    `focus:border-accent` / `focus-within:border-accent`, so the native ring here
    would double up on top of it. Checkboxes and radios have no such treatment,
-   so they keep it alongside buttons, links, and other tabbable elements. */
-:where(a, button, input[type="checkbox"], input[type="radio"], [tabindex]):focus-visible {
+   so they keep it alongside buttons, links, and other tabbable elements.
+
+   `[role="tab"]` opts out for the same reason a text field does — it draws its
+   own. A tab sits *on* the rule it underlines, and a ring floating 2px clear of
+   it puts a rounded box straight through that rule; the strip lights its own
+   underline instead. Note this rule is unlayered, so it outranks every Tailwind
+   utility no matter how specific — a component cannot opt out from its own
+   class list, and the exclusion has to be made here. */
+:where(a, button, input[type="checkbox"], input[type="radio"], [tabindex]):not(
+    [role="tab"]
+  ):focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 6px;

@@ -20,6 +20,32 @@ export function Table({ children, minWidth = "min-w-220" }: { children: ReactNod
   );
 }
 
+/**
+ * Where a wide screen's slack goes.
+ *
+ * `table-layout: auto` shares surplus width between every column, which on a
+ * 2000px display pushes a basket's name and its value to opposite ends of the
+ * screen with a lake of nothing in between — the two figures you are meant to
+ * read together end up further apart than any two things on the page. A ledger
+ * does the opposite: one column absorbs the slack (the name), and every figure
+ * stays shrink-to-fit and clustered at the right margin, so the eye travels
+ * down a tight block of numbers instead of across an empty one.
+ *
+ * `w-px` is the idiom for that: a width the content always exceeds, which auto
+ * layout resolves to "as narrow as this column's content allows".
+ */
+const GROW = "w-full";
+/**
+ * `max-w-0` on the growing *cell* is what makes `truncate` inside it work at
+ * all. A table column is at least as wide as its widest content, and a nowrap
+ * line of text reports its full length as that minimum — so an untruncated
+ * description silently widens the table past its container and hands the page a
+ * horizontal scrollbar. Zero max-width breaks that feedback loop: the column
+ * takes the surplus `w-full` gives it, and its contents fit themselves to it.
+ */
+const GROW_CELL = "w-full max-w-0";
+const TIGHT = "w-px whitespace-nowrap";
+
 export function HeadRow({ children }: { children: ReactNode }) {
   return (
     <thead>
@@ -34,6 +60,8 @@ export function Th({
   first,
   last,
   srOnly,
+  grow,
+  tight,
 }: {
   children?: ReactNode;
   align?: "left" | "right";
@@ -41,6 +69,10 @@ export function Th({
   first?: boolean;
   last?: boolean;
   srOnly?: boolean;
+  /** The one column that absorbs a wide screen's surplus width. */
+  grow?: boolean;
+  /** Shrink-to-fit — every figure column. */
+  tight?: boolean;
 }) {
   return (
     <th
@@ -48,6 +80,8 @@ export function Th({
       className={cn(
         "px-3 py-3 font-medium",
         align === "left" ? "text-left" : "text-right",
+        grow && GROW,
+        tight && TIGHT,
         first && "pl-6",
         last && "pr-6",
       )}
@@ -87,18 +121,24 @@ export function Td({
   first,
   last,
   className,
+  grow,
+  tight,
 }: {
   children: ReactNode;
   align?: "left" | "right";
   first?: boolean;
   last?: boolean;
   className?: string;
+  grow?: boolean;
+  tight?: boolean;
 }) {
   return (
     <td
       className={cn(
         "px-3 py-3.5 align-middle",
         align === "left" ? "text-left" : "text-right tabular-nums",
+        grow && GROW_CELL,
+        tight && TIGHT,
         first && "pl-6",
         last && "pr-6",
         className,

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
+import { googleFinanceUrl } from "@/lib/market/symbols";
 import type { Tone } from "@/lib/types";
 
 export type { Tone };
@@ -283,6 +284,15 @@ export function Tabs<T extends string>({
             onClick={() => onChange(t.id)}
             className={cn(
               "-mb-px flex items-center gap-2 border-b-2 py-3 text-body font-medium transition",
+              // A tab's whole job is to sit *on* the rule it underlines, so the
+              // global focus ring — a rounded box floating 2px clear of the
+              // target — draws a rectangle straight through that rule and reads
+              // as a rendering fault. The indicator here is made of the parts
+              // the tab already has: the underline lights up and the label
+              // lifts out of the band, which is visible without putting a box
+              // across the line the strip is built on.
+              "focus-visible:outline-none",
+              "focus-visible:border-accent focus-visible:bg-canvas focus-visible:text-ink",
               on
                 ? "border-accent text-ink"
                 : "border-transparent text-ink-muted hover:text-ink",
@@ -552,5 +562,41 @@ export function CheckField({
         ) : null}
       </span>
     </label>
+  );
+}
+
+/**
+ * A ticker is a link, everywhere it appears. There is no in-app instrument
+ * page to send it to, so it opens the Google Finance quote in a new tab —
+ * clicked from a table you are reading, the current view should survive.
+ *
+ * The underline only appears on hover: a table of tickers with every one of
+ * them underlined is noise, but a symbol that does nothing on hover reads as
+ * dead text.
+ */
+export function SymbolLink({
+  symbol,
+  exchange,
+  className,
+  children,
+}: {
+  symbol: string;
+  exchange: string;
+  className?: string;
+  children?: ReactNode;
+}) {
+  return (
+    <a
+      href={googleFinanceUrl({ symbol, exchange })}
+      target="_blank"
+      rel="noopener noreferrer"
+      title={`${symbol} on Google Finance`}
+      className={cn(
+        "underline-offset-2 hover:underline hover:text-accent-ink focus-visible:underline",
+        className,
+      )}
+    >
+      {children ?? symbol}
+    </a>
   );
 }

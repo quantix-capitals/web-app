@@ -28,3 +28,14 @@ export function fromYahooSymbol(yahooSymbol: string): ExchangeSymbol {
 export function instrumentKey({ symbol, exchange }: ExchangeSymbol): string {
   return `${exchange.toUpperCase()}:${symbol.toUpperCase()}`;
 }
+
+/**
+ * Where a ticker goes when you click it. Google Finance quotes are addressed
+ * `SYMBOL:EXCHANGE` — the same two facts we already carry everywhere — so no
+ * per-instrument mapping table is needed.
+ */
+export function googleFinanceUrl({ symbol, exchange }: ExchangeSymbol): string {
+  return `https://www.google.com/finance/beta/quote/${encodeURIComponent(
+    symbol.toUpperCase(),
+  )}:${encodeURIComponent(exchange.toUpperCase())}`;
+}

@@ -35,11 +35,20 @@ then see [supabase/README.md](supabase/README.md).
 | --- | --- |
 | Colours, type scale, spacing | `apps/web/src/app/globals.css` |
 | The sidebar and its routes | `apps/web/src/components/shell/nav.ts` |
-| Shared UI (badges, stats, empty states) | `apps/web/src/components/ui/primitives.tsx` |
+| Shared UI (badges, stats, empty states, `SymbolLink`) | `apps/web/src/components/ui/primitives.tsx` |
+| Where a clicked ticker goes | `googleFinanceUrl` in `apps/web/src/lib/market/symbols.ts` |
 | The three.js hero band | `apps/web/src/components/hero/` |
 | Supabase wiring | `apps/web/src/lib/supabase/` |
 | The agent's HTTP contract | `apps/web/src/lib/agent/client.ts` + `apps/agent/src/routes/` |
 | Tables and RLS | `supabase/migrations/0001_init.sql` |
+
+## Instruments
+
+There is no in-app instrument page. Every ticker rendered anywhere — watchlist
+rows, the basket-contents column, portfolio holdings — is a `SymbolLink`, which
+opens the Google Finance quote (`.../quote/SYMBOL:EXCHANGE`) in a new tab so the
+view you were reading survives the click. If you render a symbol somewhere new,
+render it through `SymbolLink`, not a bare `<span>`.
 
 ## Design
 
