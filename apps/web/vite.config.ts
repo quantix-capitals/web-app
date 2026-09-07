@@ -38,7 +38,12 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5173,
+    // Pinned, not preferred. `strictPort` is the point: Zerodha will only
+    // redirect back to the URL registered on the Kite app, so a dev server that
+    // quietly moved to :3001 because something else held :3000 would break the
+    // connect flow with an error that looks like it came from Kite.
+    port: 3000,
+    strictPort: true,
     proxy: {
       // The server half — see supabase/functions. Proxied so calls are
       // same-origin in dev and the functions need no CORS allowlist locally.
@@ -48,5 +53,10 @@ export default defineConfig({
         changeOrigin: true,
       },
     },
+  },
+  // `vite preview` serves the built app; same reasoning, same port.
+  preview: {
+    port: 3000,
+    strictPort: true,
   },
 });

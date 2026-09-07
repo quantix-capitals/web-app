@@ -1,0 +1,145 @@
+{
+  "node": {
+    "407e88eace0bdf3e94008752e51bf36a6d5e0366a8": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "createList"
+    },
+    "40ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "deleteList"
+    },
+    "6035ada3bada249e8cb5f5be13cf00d03fb6266bbf": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "removeItem"
+    },
+    "6065d8959686e002a9d51d02c9e2bd73240c4ec760": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "addSymbol"
+    },
+    "60d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "updateList"
+    },
+    "707487fdc55b1d10bf44a4214e056aeedcf72f8b44": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "setQuantity"
+    },
+    "70817cf189660e013f1ee4f17d07d41bb72f7fce6b": {
+      "workers": {
+        "app/watchlist/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        },
+        "app/watchlist/[id]/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fwatchlist%2Factions.ts%22%2C%5B%7B%22id%22%3A%22407e88eace0bdf3e94008752e51bf36a6d5e0366a8%22%2C%22exportedName%22%3A%22createList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2240ef15d7ed96b3c675a01bfd3a0e0ea48b92a42d87%22%2C%22exportedName%22%3A%22deleteList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226035ada3bada249e8cb5f5be13cf00d03fb6266bbf%22%2C%22exportedName%22%3A%22removeItem%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%226065d8959686e002a9d51d02c9e2bd73240c4ec760%22%2C%22exportedName%22%3A%22addSymbol%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2260d2421fe0b41c3b5e3c7746ae2ac0a9987df61a0f%22%2C%22exportedName%22%3A%22updateList%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%22707487fdc55b1d10bf44a4214e056aeedcf72f8b44%22%2C%22exportedName%22%3A%22setQuantity%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%2C%7B%22id%22%3A%2270817cf189660e013f1ee4f17d07d41bb72f7fce6b%22%2C%22exportedName%22%3A%22setEntry%22%2C%22filename%22%3A%22lib%2Fwatchlist%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/watchlist/page": "action-browser",
+        "app/watchlist/[id]/page": "action-browser"
+      },
+      "filename": "lib/watchlist/actions.ts",
+      "exportedName": "setEntry"
+    },
+    "601d78161f9688c2d48300e5810d7d3213870f4e72": {
+      "workers": {
+        "app/profile/page": {
+          "moduleId": "(action-browser)/../../node_modules/next/dist/build/webpack/loaders/next-flight-action-entry-loader.js?actions=%5B%5B%22%2FUsers%2Fsatyam%2FDocuments%2Fprojects%2Fstelth-mode%2Fapps%2Fweb%2Fsrc%2Flib%2Fsupabase%2Factions.ts%22%2C%5B%7B%22id%22%3A%22601d78161f9688c2d48300e5810d7d3213870f4e72%22%2C%22exportedName%22%3A%22sendMagicLink%22%2C%22filename%22%3A%22lib%2Fsupabase%2Factions.ts%22%7D%5D%5D%5D&__client_imported__=true!",
+          "async": false
+        }
+      },
+      "layer": {
+        "app/profile/page": "action-browser"
+      },
+      "filename": "lib/supabase/actions.ts",
+      "exportedName": "sendMagicLink"
+    }
+  },
+  "edge": {},
+  "encryptionKey": "u5iJ0gJLau1EHobBVBnhHD4M8C5iDnekG18PFv6JJY4="
+}

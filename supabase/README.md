@@ -41,6 +41,8 @@ supabase secrets set WEB_ORIGIN=https://your-app  ALLOWED_ORIGINS=https://your-a
 ```
 
 The Kite app's registered redirect URL must be `{WEB_ORIGIN}/zerodha/callback`.
+Locally that is `http://localhost:3000/zerodha/callback` — which is why the dev
+server pins :3000 with `strictPort` rather than taking whatever is free.
 
 ## What the schema assumes
 

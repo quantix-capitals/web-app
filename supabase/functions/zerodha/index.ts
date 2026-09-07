@@ -31,7 +31,7 @@ const NOT_CONFIGURED = "Zerodha is not configured. Set KITE_API_KEY and KITE_API
 
 /** Where to bounce the user back to. The web app's origin. */
 function webOrigin(): string {
-  return (Deno.env.get("WEB_ORIGIN") ?? "http://localhost:5173").replace(/\/$/, "");
+  return (Deno.env.get("WEB_ORIGIN") ?? "http://localhost:3000").replace(/\/$/, "");
 }
 
 Deno.serve(async (request) => {

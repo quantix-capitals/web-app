@@ -37,7 +37,7 @@ holds the Supabase service-role key.
 
 ```bash
 npm install
-npm run dev          # web, on :5173
+npm run dev          # web, on :3000
 ```
 
 The dev server proxies `/functions/v1` to `http://127.0.0.1:54321`, so
