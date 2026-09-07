@@ -58,11 +58,21 @@ export interface Trade {
   note: string | null;
 }
 
+export type ListOrigin = "user" | "agent";
+export type ListVisibility = "private" | "public";
+export type EntrySource = "live" | "backfill" | "manual";
+
 export interface Watchlist {
   id: string;
   user_id: string;
   name: string;
+  description: string | null;
+  created_by: ListOrigin;
+  visibility: ListVisibility;
+  source_run_id: string | null;
+  source_scan_id: string | null;
   created_at: string;
+  updated_at: string;
 }
 
 export interface WatchlistItem {
@@ -71,6 +81,10 @@ export interface WatchlistItem {
   instrument_id: string;
   note: string | null;
   added_at: string;
+  quantity: number;
+  entry_price: number | null;
+  entry_at: string | null;
+  entry_source: EntrySource | null;
 }
 
 export type SignalDirection = "long" | "short";
