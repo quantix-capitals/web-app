@@ -6,14 +6,36 @@ import {
   Section,
   SectionHeader,
 } from "@/components/ui/primitives";
+import { createServerSupabase, getCurrentUser } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/client";
+import { SignInForm } from "./sign-in-form";
 
 export const metadata = { title: "Profile — Stealth Mode" };
 
 /**
- * Account and preferences. Backed by the `profiles` row Supabase auth creates on
- * sign-up; every field here is read-only until the client is wired.
+ * Account and preferences. Backed by the `profiles` row Supabase auth creates
+ * on sign-up.
  */
-export default function ProfilePage() {
+export default async function ProfilePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ auth_error?: string }>;
+}) {
+  const { auth_error: authError } = await searchParams;
+  const user = await getCurrentUser();
+
+  let profile: { display_name: string | null; base_currency: string; created_at: string } | null =
+    null;
+  if (user && isSupabaseConfigured()) {
+    const supabase = await createServerSupabase();
+    const { data } = await supabase
+      .from("profiles")
+      .select("display_name, base_currency, created_at")
+      .eq("id", user.id)
+      .single();
+    profile = data;
+  }
+
   return (
     <div className="bg-canvas">
       <PageHeader
@@ -21,17 +43,38 @@ export default function ProfilePage() {
         subtitle="Your account, your base currency, and how the agent is allowed to work."
       />
 
+      {authError ? (
+        <Section>
+          <div className="px-6 py-3 text-detail text-loss">{authError}</div>
+        </Section>
+      ) : null}
+
       <Section>
         <SectionHeader
           title="Account"
-          subtitle="Comes from Supabase auth once sign-in is wired."
-          right={<Badge tone="warn">Not signed in</Badge>}
+          subtitle={
+            user ? "Signed in via Supabase auth." : "Sign in below with a magic link."
+          }
+          right={
+            user ? (
+              <Badge tone="gain">Signed in</Badge>
+            ) : (
+              <Badge tone="warn">Not signed in</Badge>
+            )
+          }
         />
         <dl className="divide-y divide-line">
-          <Field label="Name" />
-          <Field label="Email" />
-          <Field label="Base currency" />
-          <Field label="Member since" />
+          <Field label="Name" value={profile?.display_name ?? undefined} />
+          <Field label="Email" value={user?.email ?? undefined} />
+          <Field label="Base currency" value={profile?.base_currency} />
+          <Field
+            label="Member since"
+            value={
+              profile?.created_at
+                ? new Date(profile.created_at).toLocaleDateString()
+                : undefined
+            }
+          />
         </dl>
       </Section>
 
@@ -48,9 +91,15 @@ export default function ProfilePage() {
       <Section flush>
         <SectionHeader title="Session" />
         <div className="px-6 py-5">
-          <button type="button" className={ActionStyle({ variant: "ghost" })}>
-            Sign in
-          </button>
+          {user ? (
+            <form action="/auth/sign-out" method="post">
+              <button type="submit" className={ActionStyle({ variant: "ghost" })}>
+                Sign out
+              </button>
+            </form>
+          ) : (
+            <SignInForm />
+          )}
         </div>
       </Section>
     </div>
