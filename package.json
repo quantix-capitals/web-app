@@ -1,0 +1,14 @@
+{
+  "name": "stealth-mode",
+  "private": true,
+  "version": "0.1.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace @stealth/web",
+    "build": "npm run build --workspace @stealth/web",
+    "lint": "npm run lint --workspace @stealth/web",
+    "dev:agent": "npm run dev --workspace @stealth/agent"
+  }
+}

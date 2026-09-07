@@ -1,0 +1,192 @@
+@import "tailwindcss";
+
+/* ---------------------------------------------------------------------------
+   Stealth — "trading desk" theme.
+   Graphite base, molten accent, semantic ramp where up/down carry real meaning.
+   Carried over from the Odyssey design system; the rules below are the same.
+   --------------------------------------------------------------------------- */
+
+@theme {
+  /* ---------------------------------------------------------------------------
+     Surfaces and ink.
+
+     One rule governs this ramp: **700 and below is structure, 600 and above is
+     ink.** Nothing in the structure range may carry text, and nothing in the ink
+     range may be a background. The gap between 700 (L .350) and 600 (L .582) is
+     deliberately wide so the two ranges cannot be confused at a glance.
+
+     Every ink step clears WCAG AA against base-950 — the dimmest, 600, sits at
+     4.63:1, so even a timestamp is legible.
+
+     Chroma is near zero: graphite, not blue-slate. Ember below is the only hue
+     with any saturation, which is what makes it read as an accent at all.
+     --------------------------------------------------------------------------- */
+  --color-base-950: oklch(0.150 0.004 265);
+  --color-base-900: oklch(0.194 0.004 265);
+  --color-base-850: oklch(0.230 0.005 265);
+  --color-base-800: oklch(0.276 0.005 265);
+  --color-base-700: oklch(0.350 0.006 265);
+  /* — the divide: structure above, ink below — */
+  --color-base-600: oklch(0.582 0.008 265);
+  --color-base-500: oklch(0.665 0.008 265);
+  --color-base-400: oklch(0.748 0.007 265);
+  --color-base-300: oklch(0.824 0.006 265);
+  --color-base-200: oklch(0.896 0.005 265);
+  --color-base-100: oklch(0.962 0.004 265);
+
+  /* Molten — the accent. Reserved for decisions and primary actions. */
+  --color-ember-600: oklch(0.585 0.198 42);
+  --color-ember-500: oklch(0.672 0.191 45);
+  --color-ember-400: oklch(0.755 0.164 55);
+  --color-ember-300: oklch(0.828 0.130 68);
+
+  /* Semantic. On this product `ok` is a gain and `danger` is a loss, so these two
+     are load-bearing: never spend them on decoration. */
+  --color-ok-500: oklch(0.702 0.160 155);
+  --color-ok-400: oklch(0.782 0.146 156);
+  --color-warn-500: oklch(0.780 0.152 78);
+  --color-danger-500: oklch(0.634 0.208 22);
+  --color-danger-400: oklch(0.712 0.184 22);
+  --color-info-500: oklch(0.680 0.140 245);
+  --color-violet-500: oklch(0.660 0.170 300);
+
+  /* ---------------------------------------------------------------------------
+     Type scale. Five sizes, named for the job they do, because a console that
+     reaches for an arbitrary text-[9px] wherever a label felt small ends up with
+     a dozen sizes and no hierarchy. If a new piece of text does not fit one of
+     these, the answer is to pick the closest — not to add a sixth.
+     --------------------------------------------------------------------------- */
+  --text-meta: 0.6875rem; /* 11px — mono readouts, timestamps, eyebrow labels */
+  --text-meta--line-height: 1rem;
+  --text-detail: 0.75rem; /* 12px — secondary prose, list sublines */
+  --text-detail--line-height: 1.125rem;
+  --text-body: 0.8125rem; /* 13px — the default. Most text on the page. */
+  --text-body--line-height: 1.375rem;
+  --text-lead: 0.9375rem; /* 15px — panel titles, the sentence that matters */
+  --text-lead--line-height: 1.4rem;
+  --text-figure: 2rem; /* 32px — a single measured number */
+  --text-figure--line-height: 1;
+
+  --font-sans:
+    var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono:
+    var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
+
+  --animate-stream-in: stream-in 0.34s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-pulse-ring: pulse-ring 2.6s ease-out infinite;
+}
+
+@keyframes stream-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 45%, transparent);
+  }
+  70% {
+    box-shadow: 0 0 0 5px transparent;
+  }
+  100% {
+    box-shadow: 0 0 0 0 transparent;
+  }
+}
+
+html {
+  color-scheme: dark;
+}
+
+body {
+  background: var(--color-base-950);
+  color: var(--color-base-200);
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle glow behind the surfaces that carry a hero. Data surfaces paint an
+   opaque ground over it — see `.console-ground`. */
+.forge-bg::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    radial-gradient(
+      60rem 32rem at 50% -12%,
+      color-mix(in oklch, var(--color-ember-600) 13%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      40rem 26rem at 88% 6%,
+      color-mix(in oklch, var(--color-info-500) 7%, transparent),
+      transparent 70%
+    );
+}
+
+/* An opaque ground for pages that are all readout. Nothing tints the numbers. */
+.console-ground {
+  background: var(--color-base-950);
+}
+
+/* Fine grid — reads as an instrument panel, not a landing page. */
+.grid-fade {
+  background-image:
+    linear-gradient(
+      to right,
+      color-mix(in oklch, var(--color-base-700) 32%, transparent) 1px,
+      transparent 1px
+    ),
+    linear-gradient(
+      to bottom,
+      color-mix(in oklch, var(--color-base-700) 32%, transparent) 1px,
+      transparent 1px
+    );
+  background-size: 44px 44px;
+  mask-image: radial-gradient(70% 55% at 50% 0%, #000 10%, transparent 100%);
+}
+
+/* The activation band sits above the headline; it dissolves at every edge so the
+   canvas has no visible bounds and the type below stays on flat ground. */
+.hero-webgl {
+  mask-image: radial-gradient(72% 88% at 50% 50%, #000 18%, transparent 100%);
+}
+
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--color-base-800);
+  border-radius: 99px;
+  border: 2px solid var(--color-base-950);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-base-700);
+}
+
+:where(a, button, input, textarea, select, [tabindex]):focus-visible {
+  outline: 2px solid var(--color-ember-500);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@stealth/agent",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Momentum + portfolio agent. Hosted separately from the web app.",
+  "main": "src/server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "node --watch --env-file=.env src/server.js",
+    "start": "node src/server.js"
+  },
+  "dependencies": {}
+}
