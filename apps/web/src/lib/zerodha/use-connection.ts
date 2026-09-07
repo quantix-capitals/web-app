@@ -8,7 +8,7 @@ import {
   saveHoldings,
   subscribe,
 } from "./local-store";
-import type { KiteHolding, ZerodhaConnection } from "./types";
+import type { KiteHolding, KiteMfHolding, ZerodhaConnection } from "./types";
 
 export interface Connection {
   connection: ZerodhaConnection | null;
@@ -19,6 +19,8 @@ export interface Connection {
   error: string | null;
   /** Set when Zerodha rejected the token — the fix is to connect again. */
   expired: boolean;
+  /** Equity loaded but the mutual-funds endpoint did not. Null when both were fine. */
+  mfError: string | null;
   refresh: () => Promise<void>;
   disconnect: () => void;
 }
@@ -29,6 +31,7 @@ export function useZerodha(): Connection {
   const [syncing, setSyncing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expired, setExpired] = useState(false);
+  const [mfError, setMfError] = useState<string | null>(null);
 
   const token = connection?.session.access_token ?? null;
 
@@ -42,7 +45,12 @@ export function useZerodha(): Connection {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ access_token: token }),
       });
-      const body = (await res.json()) as { holdings?: KiteHolding[]; error?: string };
+      const body = (await res.json()) as {
+        holdings?: KiteHolding[];
+        mfHoldings?: KiteMfHolding[];
+        mfError?: string | null;
+        error?: string;
+      };
 
       if (!res.ok) {
         setExpired(res.status === 401);
@@ -50,7 +58,8 @@ export function useZerodha(): Connection {
         return;
       }
       setExpired(false);
-      saveHoldings(body.holdings ?? []);
+      setMfError(body.mfError ?? null);
+      saveHoldings(body.holdings ?? [], body.mfHoldings ?? []);
     } catch {
       setError("Could not reach the server.");
     } finally {
@@ -64,6 +73,7 @@ export function useZerodha(): Connection {
     syncing,
     error,
     expired,
+    mfError,
     refresh,
     disconnect,
   };

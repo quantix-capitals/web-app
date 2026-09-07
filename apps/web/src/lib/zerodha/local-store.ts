@@ -9,7 +9,12 @@
  * "not connected" and the stored value swaps in without a setState-in-effect.
  */
 
-import type { KiteHolding, KiteSession, ZerodhaConnection } from "./types";
+import type {
+  KiteHolding,
+  KiteMfHolding,
+  KiteSession,
+  ZerodhaConnection,
+} from "./types";
 
 const KEY = "stealth:zerodha";
 
@@ -43,7 +48,10 @@ function read(): ZerodhaConnection | null {
     const parsed = JSON.parse(raw) as ZerodhaConnection;
     // A hand-edited or half-written entry should read as "not connected" rather
     // than crash every component that renders it.
-    return parsed?.session?.access_token ? parsed : null;
+    if (!parsed?.session?.access_token) return null;
+    // Written by a build that predates mutual funds — the array is absent, and
+    // every `.map` over it would throw until the next sync rewrote the entry.
+    return { ...parsed, mf_holdings: parsed.mf_holdings ?? [] };
   } catch {
     return null;
   }
@@ -64,15 +72,21 @@ export function saveSession(session: KiteSession) {
   commit({
     session,
     holdings: [],
+    mf_holdings: [],
     synced_at: null,
     connected_at: new Date().toISOString(),
   });
 }
 
-export function saveHoldings(holdings: KiteHolding[]) {
+export function saveHoldings(holdings: KiteHolding[], mfHoldings: KiteMfHolding[]) {
   const current = getSnapshot();
   if (!current) return;
-  commit({ ...current, holdings, synced_at: new Date().toISOString() });
+  commit({
+    ...current,
+    holdings,
+    mf_holdings: mfHoldings,
+    synced_at: new Date().toISOString(),
+  });
 }
 
 export function disconnect() {

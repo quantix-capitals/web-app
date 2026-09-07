@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { fetchHoldings, getCredentials } from "@/lib/zerodha/kite";
+import { fetchHoldings, fetchMfHoldings, getCredentials } from "@/lib/zerodha/kite";
 
 export const runtime = "nodejs";
 
@@ -30,8 +30,20 @@ export async function POST(req: Request) {
   }
 
   try {
-    const holdings = await fetchHoldings(accessToken, creds.apiKey);
-    return NextResponse.json({ holdings });
+    // Equity decides the request. Mutual funds are a separate Kite endpoint that
+    // some accounts simply cannot reach, so a failure there must not blank out a
+    // book that loaded fine — it comes back as an empty list plus a note.
+    const [equity, mf] = await Promise.all([
+      fetchHoldings(accessToken, creds.apiKey),
+      fetchMfHoldings(accessToken, creds.apiKey).catch((e: unknown) => e as Error),
+    ]);
+
+    const mfFailed = mf instanceof Error;
+    return NextResponse.json({
+      holdings: equity,
+      mfHoldings: mfFailed ? [] : mf,
+      mfError: mfFailed ? mf.message : null,
+    });
   } catch (err) {
     // Kite expires every access token each morning, so an expired session is the
     // ordinary case here, not an exception. The UI reads 401 as "reconnect".

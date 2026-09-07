@@ -8,7 +8,7 @@
  */
 
 import { createHash } from "node:crypto";
-import type { KiteHolding, KiteSession } from "./types";
+import type { KiteHolding, KiteMfHolding, KiteSession } from "./types";
 
 const KITE_API = "https://api.kite.trade";
 const KITE_LOGIN = "https://kite.zerodha.com/connect/login";
@@ -90,6 +90,20 @@ export async function fetchHoldings(
   apiKey: string,
 ): Promise<KiteHolding[]> {
   return kiteFetch<KiteHolding[]>("/portfolio/holdings", {
+    method: "GET",
+    headers: { Authorization: `token ${apiKey}:${accessToken}` },
+  });
+}
+
+/**
+ * Mutual funds live on their own endpoint with their own shape — a fund is a
+ * folio and a NAV, not a position with a last traded price.
+ */
+export async function fetchMfHoldings(
+  accessToken: string,
+  apiKey: string,
+): Promise<KiteMfHolding[]> {
+  return kiteFetch<KiteMfHolding[]>("/mf/holdings", {
     method: "GET",
     headers: { Authorization: `token ${apiKey}:${accessToken}` },
   });
