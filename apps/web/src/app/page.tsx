@@ -55,7 +55,7 @@ export default function OverviewPage() {
             />
             <Empty inline>
               No positions yet. Connect Zerodha from{" "}
-              <Link href="/portfolio" className="text-ember-400 hover:text-ember-300">
+              <Link href="/portfolio" className="text-accent-ink underline decoration-line-strong underline-offset-2 hover:decoration-accent">
                 Portfolio
               </Link>{" "}
               and this fills in on the next price refresh.
@@ -68,7 +68,7 @@ export default function OverviewPage() {
             />
             <Empty inline>
               The agent has not run a scan yet. Start one from{" "}
-              <Link href="/momentum" className="text-ember-400 hover:text-ember-300">
+              <Link href="/momentum" className="text-accent-ink underline decoration-line-strong underline-offset-2 hover:decoration-accent">
                 Momentum
               </Link>
               .
@@ -82,7 +82,7 @@ export default function OverviewPage() {
           title="Agent activity"
           subtitle="Every scan and review the agent has run, most recent first."
           right={
-            <Link href="/momentum" className="text-meta text-base-500 hover:text-base-200">
+            <Link href="/momentum" className="text-meta text-ink-muted hover:text-ink">
               View all
             </Link>
           }
@@ -95,7 +95,7 @@ export default function OverviewPage() {
 
       {/* A quiet map of the product, for the first session where nothing is set up. */}
       <Section flush>
-        <SplitGrid cols={3} className="border-t border-base-850">
+        <SplitGrid cols={3} className="border-t border-line">
           <StartCard
             href="/portfolio"
             icon={<IconPortfolio className="size-[18px]" />}
@@ -135,12 +135,12 @@ function StartCard({
   children: React.ReactNode;
 }) {
   return (
-    <Link href={href} className="group block px-6 py-5 transition hover:bg-base-900/60">
-      <div className="flex items-center gap-2.5 text-base-500 transition-colors group-hover:text-ember-400">
+    <Link href={href} className="group block px-6 py-5 transition hover:bg-sunken">
+      <div className="flex items-center gap-2.5 text-ink-muted transition-colors group-hover:text-accent">
         {icon}
-        <span className="text-body font-semibold text-base-200">{title}</span>
+        <span className="text-body font-semibold text-ink">{title}</span>
       </div>
-      <p className="mt-2 text-detail leading-relaxed text-base-500">{children}</p>
+      <p className="mt-2 text-detail leading-relaxed text-ink-muted">{children}</p>
     </Link>
   );
 }

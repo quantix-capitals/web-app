@@ -15,7 +15,7 @@ export const metadata = { title: "Profile — Stealth Mode" };
  */
 export default function ProfilePage() {
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <PageHeader
         title="Profile"
         subtitle="Your account, your base currency, and how the agent is allowed to work."
@@ -27,7 +27,7 @@ export default function ProfilePage() {
           subtitle="Comes from Supabase auth once sign-in is wired."
           right={<Badge tone="warn">Not signed in</Badge>}
         />
-        <dl className="divide-y divide-base-850">
+        <dl className="divide-y divide-line">
           <Field label="Name" />
           <Field label="Email" />
           <Field label="Base currency" />
@@ -61,9 +61,9 @@ export default function ProfilePage() {
 function Field({ label, value }: { label: string; value?: string }) {
   return (
     <div className="flex items-baseline gap-4 px-6 py-3.5">
-      <dt className="w-40 shrink-0 text-detail text-base-500">{label}</dt>
-      <dd className="min-w-0 text-body text-base-200">
-        {value ?? <span className="text-base-600">—</span>}
+      <dt className="w-40 shrink-0 text-detail text-ink-muted">{label}</dt>
+      <dd className="min-w-0 text-body text-ink">
+        {value ?? <span className="text-ink-subtle">—</span>}
       </dd>
     </div>
   );

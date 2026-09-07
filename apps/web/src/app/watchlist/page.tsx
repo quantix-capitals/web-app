@@ -11,7 +11,7 @@ export const metadata = { title: "Watchlist — Stealth Mode" };
  */
 export default function WatchlistPage() {
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <PageHeader
         title="Watchlist"
         subtitle="Names you are following. The agent scores these on every scan, held or not."

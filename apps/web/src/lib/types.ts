@@ -4,14 +4,11 @@
  * their empty state until the Supabase client in `lib/supabase` is wired.
  */
 
-export type Tone =
-  | "neutral"
-  | "ember"
-  | "ok"
-  | "warn"
-  | "danger"
-  | "info"
-  | "violet";
+/**
+ * Named for meaning, not for colour. `gain` and `loss` are the two that carry
+ * real information on this product — everything else is chrome.
+ */
+export type Tone = "neutral" | "accent" | "gain" | "loss" | "warn" | "info";
 
 export interface Profile {
   id: string;

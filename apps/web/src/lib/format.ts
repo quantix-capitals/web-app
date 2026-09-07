@@ -46,8 +46,8 @@ export function formatRelative(iso: string): string {
 }
 
 /** The direction a figure moved, as a tone the primitives already understand. */
-export function moveTone(change: number): "ok" | "danger" | "neutral" {
-  if (change > 0) return "ok";
-  if (change < 0) return "danger";
+export function moveTone(change: number): "gain" | "loss" | "neutral" {
+  if (change > 0) return "gain";
+  if (change < 0) return "loss";
   return "neutral";
 }

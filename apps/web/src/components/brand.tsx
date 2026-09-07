@@ -2,48 +2,30 @@ import Link from "next/link";
 import { cn } from "@/lib/format";
 
 /**
- * Stealth: a breakout mark — a rising leg clearing a base, the shape the whole
- * product looks for. Rename in one place if the product name changes.
+ * Stealth: a rising leg clearing a base — the shape the whole product looks for.
+ *
+ * Redrawn flat for this theme. The old mark used a two-stop molten gradient,
+ * which was the loudest thing on any page it appeared on; a single stroke in
+ * the accent says the same thing quietly and inverts correctly in dark mode.
  */
 export function StealthMark({ className }: { className?: string }) {
   return (
     <svg
       viewBox="0 0 32 32"
       fill="none"
+      stroke="currentColor"
+      strokeWidth="2.1"
+      strokeLinecap="round"
+      strokeLinejoin="round"
       aria-hidden
       className={cn("size-7", className)}
     >
-      <defs>
-        <linearGradient id="stealth-leg" x1="0" y1="1" x2="1" y2="0">
-          <stop offset="0%" stopColor="var(--color-ember-600)" />
-          <stop offset="100%" stopColor="var(--color-ember-300)" />
-        </linearGradient>
-      </defs>
       {/* the base it breaks out of */}
-      <path
-        d="M3.5 21.5h6"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        opacity="0.55"
-      />
+      <path d="M4 22h5.5" opacity="0.4" />
       {/* the leg */}
-      <path
-        d="M9.5 21.5 15 15.5l3.5 3.5L27 9"
-        stroke="url(#stealth-leg)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
+      <path d="M9.5 22 15 16l3.5 3.5L26.5 11" />
       {/* the target it prints into */}
-      <path
-        d="M21.5 9H27v5.5"
-        stroke="var(--color-ember-300)"
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="15" cy="15.5" r="1.4" fill="var(--color-base-950)" />
+      <path d="M21 11h5.5v5.5" />
     </svg>
   );
 }
@@ -59,13 +41,13 @@ export function Wordmark({
   return (
     <Link
       href={href}
-      className="group flex min-w-0 items-center gap-2"
+      className="group flex min-w-0 items-center gap-2.5"
       aria-label="Stealth — home"
     >
-      <StealthMark className="size-5.5 shrink-0 text-base-500 transition-colors group-hover:text-base-200" />
+      <StealthMark className="size-5 shrink-0 text-accent" />
       {compact ? null : (
-        <span className="truncate text-[15px] leading-none font-semibold tracking-tight text-base-100">
-          Stealth<span className="font-normal text-base-400"> Mode</span>
+        <span className="truncate text-body leading-none font-semibold tracking-tight text-ink">
+          Stealth<span className="font-normal text-ink-subtle"> Mode</span>
         </span>
       )}
     </Link>

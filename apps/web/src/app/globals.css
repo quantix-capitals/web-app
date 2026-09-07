@@ -1,85 +1,161 @@
 @import "tailwindcss";
 
 /* ---------------------------------------------------------------------------
-   Stealth — "trading desk" theme.
-   Graphite base, molten accent, semantic ramp where up/down carry real meaning.
-   Carried over from the Odyssey design system; the rules below are the same.
+   Stealth — "quiet ledger".
+
+   The previous theme was a trading desk: dark graphite, molten accent, hairline
+   rules everywhere, type down at 11px. It read as urgency. This one is meant to
+   read as a statement you sit with — paper ground, ink text, one restrained
+   evergreen accent, and space doing the work that borders used to do.
+
+   Two rules govern everything below.
+
+   1. **Tokens are named for their job, never their value.** `bg-surface`, not
+      `bg-base-900`. A numeric ramp cannot survive a light/dark swap — "950" is
+      the darkest thing in one mode and the brightest in the other — so the
+      scale is semantic and the two modes just assign it different values. Every
+      component reads these names and nothing else.
+
+   2. **Gain and loss are load-bearing.** They are the only saturated colours on
+      a data surface, so they may never be spent on decoration.
    --------------------------------------------------------------------------- */
 
 @theme {
-  /* ---------------------------------------------------------------------------
-     Surfaces and ink.
+  /* --- Ground and ink (light) ---------------------------------------------
+     Canvas is a warm off-white rather than #fff: pure white under a full-page
+     of figures is glare, and the faint warmth is what makes this read as paper.
+     Surface is brighter than canvas so a card lifts without a shadow.
 
-     One rule governs this ramp: **700 and below is structure, 600 and above is
-     ink.** Nothing in the structure range may carry text, and nothing in the ink
-     range may be a background. The gap between 700 (L .350) and 600 (L .582) is
-     deliberately wide so the two ranges cannot be confused at a glance.
+     Ink never reaches pure black either — 0.26 lightness at a trace of blue is
+     the colour of print, and it clears AA against every ground here.
+     ----------------------------------------------------------------------- */
+  --color-canvas: oklch(0.984 0.003 95);
+  --color-surface: oklch(1 0 0);
+  --color-sunken: oklch(0.965 0.004 95);
+  --color-line: oklch(0.916 0.004 95);
+  --color-line-strong: oklch(0.862 0.005 95);
 
-     Every ink step clears WCAG AA against base-950 — the dimmest, 600, sits at
-     4.63:1, so even a timestamp is legible.
+  --color-ink: oklch(0.262 0.012 260);
+  --color-ink-muted: oklch(0.487 0.010 260);
+  --color-ink-subtle: oklch(0.612 0.008 260);
 
-     Chroma is near zero: graphite, not blue-slate. Ember below is the only hue
-     with any saturation, which is what makes it read as an accent at all.
-     --------------------------------------------------------------------------- */
-  --color-base-950: oklch(0.150 0.004 265);
-  --color-base-900: oklch(0.194 0.004 265);
-  --color-base-850: oklch(0.230 0.005 265);
-  --color-base-800: oklch(0.276 0.005 265);
-  --color-base-700: oklch(0.350 0.006 265);
-  /* — the divide: structure above, ink below — */
-  --color-base-600: oklch(0.582 0.008 265);
-  --color-base-500: oklch(0.665 0.008 265);
-  --color-base-400: oklch(0.748 0.007 265);
-  --color-base-300: oklch(0.824 0.006 265);
-  --color-base-200: oklch(0.896 0.005 265);
-  --color-base-100: oklch(0.962 0.004 265);
+  /* --- Accent -------------------------------------------------------------
+     A muted evergreen. Deep enough to carry near-white text on a button,
+     desaturated enough that a page full of it never feels loud. Reserved for
+     the primary action and the current position in the nav.
 
-  /* Molten — the accent. Reserved for decisions and primary actions. */
-  --color-ember-600: oklch(0.585 0.198 42);
-  --color-ember-500: oklch(0.672 0.191 45);
-  --color-ember-400: oklch(0.755 0.164 55);
-  --color-ember-300: oklch(0.828 0.130 68);
+     It sits at hue 172 — blue-green — while `gain` sits at 158. That gap is
+     doing real work: it is what stops a primary button reading as a profit
+     figure on a product where green already carries a meaning. Keep the accent
+     on the teal side of green, and keep its chroma below `gain`'s, so the
+     figures stay the most saturated thing on any data surface.
+     ----------------------------------------------------------------------- */
+  --color-accent: oklch(0.478 0.078 172);
+  --color-accent-hover: oklch(0.416 0.080 172);
+  --color-accent-soft: oklch(0.956 0.022 174);
+  --color-accent-line: oklch(0.874 0.038 174);
+  --color-accent-ink: oklch(0.428 0.074 172);
+  --color-on-accent: oklch(0.99 0.005 174);
 
-  /* Semantic. On this product `ok` is a gain and `danger` is a loss, so these two
-     are load-bearing: never spend them on decoration. */
-  --color-ok-500: oklch(0.702 0.160 155);
-  --color-ok-400: oklch(0.782 0.146 156);
-  --color-warn-500: oklch(0.780 0.152 78);
-  --color-danger-500: oklch(0.634 0.208 22);
-  --color-danger-400: oklch(0.712 0.184 22);
-  --color-info-500: oklch(0.680 0.140 245);
-  --color-violet-500: oklch(0.660 0.170 300);
+  /* --- Semantic -----------------------------------------------------------
+     Gain and loss are deliberately close in weight so a red page does not shout
+     louder than a green one. Both are darkened well past the usual UI green/red
+     because they sit on white and must stay legible at 13px.
+     ----------------------------------------------------------------------- */
+  --color-gain: oklch(0.523 0.108 158);
+  --color-gain-soft: oklch(0.960 0.030 158);
+  --color-loss: oklch(0.548 0.168 24);
+  --color-loss-soft: oklch(0.962 0.030 24);
+  --color-warn: oklch(0.588 0.104 72);
+  --color-warn-soft: oklch(0.962 0.036 72);
+  /* Held away from the accent's hue so an informational chip is never read as a
+     thing you can press. */
+  --color-info: oklch(0.532 0.086 228);
+  --color-info-soft: oklch(0.960 0.026 228);
 
-  /* ---------------------------------------------------------------------------
-     Type scale. Five sizes, named for the job they do, because a console that
-     reaches for an arbitrary text-[9px] wherever a label felt small ends up with
-     a dozen sizes and no hierarchy. If a new piece of text does not fit one of
-     these, the answer is to pick the closest — not to add a sixth.
-     --------------------------------------------------------------------------- */
-  --text-meta: 0.6875rem; /* 11px — mono readouts, timestamps, eyebrow labels */
-  --text-meta--line-height: 1rem;
-  --text-detail: 0.75rem; /* 12px — secondary prose, list sublines */
-  --text-detail--line-height: 1.125rem;
-  --text-body: 0.8125rem; /* 13px — the default. Most text on the page. */
-  --text-body--line-height: 1.375rem;
-  --text-lead: 0.9375rem; /* 15px — panel titles, the sentence that matters */
-  --text-lead--line-height: 1.4rem;
-  --text-figure: 2rem; /* 32px — a single measured number */
-  --text-figure--line-height: 1;
+  /* --- Type ---------------------------------------------------------------
+     Five sizes, named for the job. Every step is larger than the desk theme it
+     replaces — the old scale bottomed out at 11px, which is a readout size, not
+     a reading size. Body is 14px and the page is built to breathe around it.
+     ----------------------------------------------------------------------- */
+  --text-meta: 0.75rem; /* 12px — labels, timestamps, table headers */
+  --text-meta--line-height: 1.125rem;
+  --text-detail: 0.8125rem; /* 13px — secondary prose, sublines */
+  --text-detail--line-height: 1.25rem;
+  --text-body: 0.875rem; /* 14px — the default */
+  --text-body--line-height: 1.5rem;
+  --text-lead: 1rem; /* 16px — section titles */
+  --text-lead--line-height: 1.5rem;
+  --text-title: 1.5rem; /* 24px — the page's one h1 */
+  --text-title--line-height: 1.875rem;
+  --text-figure: 1.75rem; /* 28px — a single measured number */
+  --text-figure--line-height: 2rem;
 
   --font-sans:
     var(--font-geist-sans), ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-serif:
+    var(--font-source-serif), ui-serif, Georgia, "Times New Roman", serif;
   --font-mono:
     var(--font-geist-mono), ui-monospace, "SF Mono", Menlo, monospace;
 
-  --animate-stream-in: stream-in 0.34s cubic-bezier(0.16, 1, 0.3, 1);
-  --animate-pulse-ring: pulse-ring 2.6s ease-out infinite;
+  /* Corners are soft but not pill-shaped — a rounded rectangle reads calm, a
+     capsule reads playful, and this is somebody's money. */
+  --radius-card: 0.875rem;
+
+  /* The only two shadows in the system. Both are near-transparent: on paper, a
+     card is told apart by its edge, and the shadow only stops it floating. */
+  --shadow-card: 0 1px 2px oklch(0.262 0.012 260 / 0.04);
+  --shadow-lift: 0 4px 16px oklch(0.262 0.012 260 / 0.07);
+
+  --animate-rise: rise 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-@keyframes stream-in {
+/* ---------------------------------------------------------------------------
+   Dark mode. Only the tokens change — not one component knows this block is
+   here. The ground lifts off pure black for the same reason the light ground
+   sits off pure white, and the accent brightens because an evergreen dark
+   enough to carry white text disappears against a dark ground.
+   --------------------------------------------------------------------------- */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-canvas: oklch(0.192 0.008 260);
+    --color-surface: oklch(0.232 0.009 260);
+    --color-sunken: oklch(0.210 0.008 260);
+    --color-line: oklch(0.298 0.010 260);
+    --color-line-strong: oklch(0.372 0.012 260);
+
+    --color-ink: oklch(0.955 0.004 260);
+    --color-ink-muted: oklch(0.735 0.008 260);
+    --color-ink-subtle: oklch(0.612 0.009 260);
+
+    /* Dark lifts the accent well past its light value — an evergreen that deep
+       disappears on a dark ground — and holds its chroma under `gain`'s so the
+       button still reads quieter than a profit figure beside it. */
+    --color-accent: oklch(0.728 0.088 172);
+    --color-accent-hover: oklch(0.796 0.078 174);
+    --color-accent-soft: oklch(0.302 0.040 172);
+    --color-accent-line: oklch(0.386 0.052 172);
+    --color-accent-ink: oklch(0.812 0.080 174);
+    --color-on-accent: oklch(0.190 0.022 172);
+
+    --color-gain: oklch(0.752 0.132 158);
+    --color-gain-soft: oklch(0.288 0.044 158);
+    --color-loss: oklch(0.702 0.166 24);
+    --color-loss-soft: oklch(0.296 0.056 24);
+    --color-warn: oklch(0.792 0.118 72);
+    --color-warn-soft: oklch(0.292 0.044 72);
+    --color-info: oklch(0.732 0.092 228);
+    --color-info-soft: oklch(0.288 0.040 228);
+
+    --shadow-card: 0 1px 2px oklch(0 0 0 / 0.24);
+    --shadow-lift: 0 4px 16px oklch(0 0 0 / 0.32);
+  }
+}
+
+@keyframes rise {
   from {
     opacity: 0;
-    transform: translateY(6px);
+    transform: translateY(4px);
   }
   to {
     opacity: 1;
@@ -87,96 +163,43 @@
   }
 }
 
-@keyframes pulse-ring {
-  0% {
-    box-shadow: 0 0 0 0 color-mix(in oklch, currentColor 45%, transparent);
-  }
-  70% {
-    box-shadow: 0 0 0 5px transparent;
-  }
-  100% {
-    box-shadow: 0 0 0 0 transparent;
-  }
-}
-
 html {
-  color-scheme: dark;
+  color-scheme: light dark;
 }
 
 body {
-  background: var(--color-base-950);
-  color: var(--color-base-200);
+  background: var(--color-canvas);
+  color: var(--color-ink);
   font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle glow behind the surfaces that carry a hero. Data surfaces paint an
-   opaque ground over it — see `.console-ground`. */
-.forge-bg::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 0;
-  background:
-    radial-gradient(
-      60rem 32rem at 50% -12%,
-      color-mix(in oklch, var(--color-ember-600) 13%, transparent),
-      transparent 70%
-    ),
-    radial-gradient(
-      40rem 26rem at 88% 6%,
-      color-mix(in oklch, var(--color-info-500) 7%, transparent),
-      transparent 70%
-    );
-}
-
-/* An opaque ground for pages that are all readout. Nothing tints the numbers. */
-.console-ground {
-  background: var(--color-base-950);
-}
-
-/* Fine grid — reads as an instrument panel, not a landing page. */
-.grid-fade {
-  background-image:
-    linear-gradient(
-      to right,
-      color-mix(in oklch, var(--color-base-700) 32%, transparent) 1px,
-      transparent 1px
-    ),
-    linear-gradient(
-      to bottom,
-      color-mix(in oklch, var(--color-base-700) 32%, transparent) 1px,
-      transparent 1px
-    );
-  background-size: 44px 44px;
-  mask-image: radial-gradient(70% 55% at 50% 0%, #000 10%, transparent 100%);
-}
-
-/* The activation band sits above the headline; it dissolves at every edge so the
-   canvas has no visible bounds and the type below stays on flat ground. */
-.hero-webgl {
-  mask-image: radial-gradient(72% 88% at 50% 50%, #000 18%, transparent 100%);
+/* Every figure on this product lines up in a column, so the numerals are always
+   tabular and never let a 1 be narrower than a 7. */
+.tnum,
+table {
+  font-variant-numeric: tabular-nums;
 }
 
 ::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+  width: 11px;
+  height: 11px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: var(--color-base-800);
+  background: var(--color-line-strong);
   border-radius: 99px;
-  border: 2px solid var(--color-base-950);
+  border: 3px solid var(--color-canvas);
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-base-700);
+  background: var(--color-ink-subtle);
 }
 
 :where(a, button, input, textarea, select, [tabindex]):focus-visible {
-  outline: 2px solid var(--color-ember-500);
+  outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 6px;
 }

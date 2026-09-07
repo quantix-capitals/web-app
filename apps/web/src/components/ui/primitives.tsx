@@ -12,8 +12,9 @@ export type { Tone };
  * The horizontal rhythm is one number — SECTION_X — so a section header, a list
  * row and a table cell all start on the same vertical line down the page.
  *
- * Type comes from the named scale in globals.css (text-meta / detail / body /
- * lead / figure). Nothing here reaches for an arbitrary pixel size.
+ * What changed with the "quiet ledger" palette is colour and type, not this
+ * structure. Every component reads the semantic tokens in globals.css and never
+ * names a shade, which is what lets light and dark be one design.
  */
 
 // --- Section ----------------------------------------------------------------
@@ -38,7 +39,7 @@ export function Section({
   return (
     <Tag
       id={id}
-      className={cn(!flush && "border-b border-base-850", id && "scroll-mt-21", className)}
+      className={cn(!flush && "border-b border-line", id && "scroll-mt-21", className)}
     >
       {children}
     </Tag>
@@ -60,22 +61,22 @@ export function SectionHeader({
   rule?: boolean;
 }) {
   return (
-    // A header is chrome, and chrome should be told apart from content by where it
-    // sits, not by being the brightest thing in the panel. It gets its own raised
-    // band closed by a rule, and gives the top of the ramp back to the content —
-    // the figure, the score, the position — which is what should be brightest.
+    // A header is chrome, and chrome should be told apart from content by where
+    // it sits, not by being the loudest thing in the panel. It gets its own
+    // sunken band closed by a rule, and gives the ink back to the content —
+    // the figure, the score, the position — which is what should read first.
     <div
       className={cn(
-        "flex items-start justify-between gap-4 bg-base-900 py-3",
+        "flex items-start justify-between gap-4 bg-sunken py-3.5",
         SECTION_X,
-        rule && "border-b border-base-800",
+        rule && "border-b border-line",
         className,
       )}
     >
       <div className="min-w-0">
-        <h2 className="text-body font-semibold tracking-wide text-base-200">{title}</h2>
+        <h2 className="text-lead font-semibold tracking-tight text-ink">{title}</h2>
         {subtitle ? (
-          <p className="mt-0.5 max-w-[68ch] text-meta leading-relaxed text-base-500">
+          <p className="mt-0.5 max-w-[70ch] text-detail leading-relaxed text-ink-muted">
             {subtitle}
           </p>
         ) : null}
@@ -86,8 +87,8 @@ export function SectionHeader({
 }
 
 /**
- * Columns told apart by a vertical rule instead of a gap — two lists sitting side
- * by side. Stacks into horizontal rules below the breakpoint.
+ * Columns told apart by a vertical rule instead of a gap — two lists sitting
+ * side by side. Stacks into horizontal rules below the breakpoint.
  */
 export function SplitGrid({
   children,
@@ -106,7 +107,7 @@ export function SplitGrid({
   return (
     <div
       className={cn(
-        "grid divide-y divide-base-850",
+        "grid divide-y divide-line",
         at[cols],
         cols === 3 ? "lg:divide-x lg:divide-y-0" : "sm:divide-x sm:divide-y-0 lg:divide-x",
         cols === 4 && "sm:max-lg:divide-y",
@@ -122,18 +123,18 @@ export function SplitGrid({
  * The row of figures at the head of a page.
  *
  * Four across on a wide screen, two then two in the middle, one per line on a
- * phone — and the rules follow the wrap. `divide-y` cannot do this on its own: it
- * draws a rule above every cell but the first, which in a two-column grid means
- * seams inside the first row. So the wrapped row's rule is drawn where the wrap
- * actually happens.
+ * phone — and the rules follow the wrap. `divide-y` cannot do this on its own:
+ * it draws a rule above every cell but the first, which in a two-column grid
+ * means seams inside the first row. So the wrapped row's rule is drawn where
+ * the wrap actually happens.
  */
 export function StatBand({ children }: { children: ReactNode }) {
   return (
     <div
       className={cn(
-        "grid divide-y divide-base-850",
+        "grid divide-y divide-line",
         "sm:grid-cols-2 sm:divide-x sm:divide-y-0",
-        "sm:max-lg:[&>*:nth-child(n+3)]:border-t sm:max-lg:[&>*:nth-child(n+3)]:border-base-850",
+        "sm:max-lg:[&>*:nth-child(n+3)]:border-t sm:max-lg:[&>*:nth-child(n+3)]:border-line",
         "lg:grid-cols-4",
       )}
     >
@@ -155,14 +156,13 @@ export function Row({
 
 // --- Badge ------------------------------------------------------------------
 
-const TONE_CLASS: Record<Tone, string> = {
-  neutral: "border-base-700 bg-base-800/70 text-base-300",
-  ember: "border-ember-600/40 bg-ember-600/12 text-ember-300",
-  ok: "border-ok-500/35 bg-ok-500/12 text-ok-400",
-  warn: "border-warn-500/35 bg-warn-500/12 text-warn-500",
-  danger: "border-danger-500/40 bg-danger-500/12 text-danger-400",
-  info: "border-info-500/35 bg-info-500/12 text-info-500",
-  violet: "border-violet-500/35 bg-violet-500/12 text-violet-500",
+const TONE_BADGE: Record<Tone, string> = {
+  neutral: "border-line bg-sunken text-ink-muted",
+  accent: "border-accent-line bg-accent-soft text-accent-ink",
+  gain: "border-transparent bg-gain-soft text-gain",
+  loss: "border-transparent bg-loss-soft text-loss",
+  warn: "border-transparent bg-warn-soft text-warn",
+  info: "border-transparent bg-info-soft text-info",
 };
 
 export function Badge({
@@ -181,7 +181,7 @@ export function Badge({
       className={cn(
         "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-meta font-medium leading-none whitespace-nowrap",
         mono && "font-mono",
-        TONE_CLASS[tone],
+        TONE_BADGE[tone],
         className,
       )}
     >
@@ -192,24 +192,20 @@ export function Badge({
 
 // --- Dot --------------------------------------------------------------------
 
-export function Dot({ tone = "neutral", pulse }: { tone?: Tone; pulse?: boolean }) {
-  const bg: Record<Tone, string> = {
-    neutral: "bg-base-600",
-    ember: "bg-ember-500",
-    ok: "bg-ok-500",
-    warn: "bg-warn-500",
-    danger: "bg-danger-500",
-    info: "bg-info-500",
-    violet: "bg-violet-500",
-  };
+const TONE_FILL: Record<Tone, string> = {
+  neutral: "bg-ink-subtle",
+  accent: "bg-accent",
+  gain: "bg-gain",
+  loss: "bg-loss",
+  warn: "bg-warn",
+  info: "bg-info",
+};
+
+export function Dot({ tone = "neutral" }: { tone?: Tone }) {
   return (
     <span
       aria-hidden
-      className={cn(
-        "inline-block size-1.5 shrink-0 rounded-full",
-        bg[tone],
-        pulse && "animate-pulse-ring",
-      )}
+      className={cn("inline-block size-1.5 shrink-0 rounded-full", TONE_FILL[tone])}
     />
   );
 }
@@ -218,7 +214,7 @@ export function Dot({ tone = "neutral", pulse }: { tone?: Tone; pulse?: boolean 
 
 export function Meter({
   value,
-  tone = "ember",
+  tone = "accent",
   className,
   label,
 }: {
@@ -227,19 +223,10 @@ export function Meter({
   className?: string;
   label?: string;
 }) {
-  const fill: Record<Tone, string> = {
-    neutral: "bg-base-400",
-    ember: "bg-ember-500",
-    ok: "bg-ok-500",
-    warn: "bg-warn-500",
-    danger: "bg-danger-500",
-    info: "bg-info-500",
-    violet: "bg-violet-500",
-  };
   const pct = Math.max(0, Math.min(100, value));
   return (
     <div
-      className={cn("h-1.5 w-full overflow-hidden rounded-full bg-base-850", className)}
+      className={cn("h-1.5 w-full overflow-hidden bg-sunken", className)}
       role="meter"
       aria-valuenow={Math.round(pct)}
       aria-valuemin={0}
@@ -247,9 +234,73 @@ export function Meter({
       aria-label={label}
     >
       <div
-        className={cn("h-full rounded-full transition-[width] duration-500", fill[tone])}
+        className={cn("h-full transition-[width] duration-500", TONE_FILL[tone])}
         style={{ width: `${pct}%` }}
       />
+    </div>
+  );
+}
+
+// --- Tabs -------------------------------------------------------------------
+
+export interface TabSpec<T extends string> {
+  id: T;
+  label: string;
+  /** Rendered as a quiet count beside the label. */
+  count?: number;
+}
+
+/**
+ * Peer views of one dataset. Underlined rather than a segmented pill: a capsule
+ * would be the only floating rounded thing on a page built from straight rules,
+ * and the underline lands on the section rule the strip already sits on.
+ */
+export function Tabs<T extends string>({
+  active,
+  onChange,
+  tabs,
+  className,
+}: {
+  active: T;
+  onChange: (id: T) => void;
+  tabs: Array<TabSpec<T>>;
+  className?: string;
+}) {
+  return (
+    <div
+      role="tablist"
+      className={cn("flex items-center gap-6 bg-sunken", SECTION_X, className)}
+    >
+      {tabs.map((t) => {
+        const on = t.id === active;
+        return (
+          <button
+            key={t.id}
+            role="tab"
+            type="button"
+            aria-selected={on}
+            onClick={() => onChange(t.id)}
+            className={cn(
+              "-mb-px flex items-center gap-2 border-b-2 py-3 text-body font-medium transition",
+              on
+                ? "border-accent text-ink"
+                : "border-transparent text-ink-muted hover:text-ink",
+            )}
+          >
+            {t.label}
+            {typeof t.count === "number" ? (
+              <span
+                className={cn(
+                  "text-meta tabular-nums",
+                  on ? "text-accent-ink" : "text-ink-subtle",
+                )}
+              >
+                {t.count}
+              </span>
+            ) : null}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -271,24 +322,26 @@ export function Empty({
 }) {
   if (inline) {
     return (
-      <div className={cn("flex items-start gap-2.5 py-4 text-xs text-base-600", SECTION_X)}>
+      <div
+        className={cn("flex items-start gap-3 py-5 text-detail text-ink-muted", SECTION_X)}
+      >
         {/* Aligned to the first line rather than to the block, so the rule still
             points at the sentence when the sentence wraps. */}
-        <span aria-hidden className="mt-2 h-px w-5 shrink-0 bg-base-800" />
-        <span className="max-w-[80ch]">{children}</span>
+        <span aria-hidden className="mt-2.5 h-px w-5 shrink-0 bg-line-strong" />
+        <span className="max-w-[80ch] leading-relaxed">{children}</span>
       </div>
     );
   }
   return (
-    <div className="flex min-h-24 items-center justify-center px-6 py-8 text-center text-detail text-base-500">
+    <div className="flex min-h-24 items-center justify-center px-6 py-10 text-center text-detail text-ink-muted">
       {children}
     </div>
   );
 }
 
 /**
- * The centred void a whole page shows before it has anything to show: one line of
- * what this page is for, and the one action that gets it there.
+ * The centred void a whole page shows before it has anything to show: one line
+ * of what this page is for, and the one action that gets it there.
  */
 export function EmptyState({
   icon,
@@ -302,25 +355,39 @@ export function EmptyState({
   action?: ReactNode;
 }) {
   return (
-    <div className="flex min-h-[46vh] flex-col items-center justify-center px-6 py-16 text-center">
+    <div className="flex min-h-[44vh] flex-col items-center justify-center px-6 py-16 text-center">
       {icon ? (
-        <div className="mb-4 flex size-11 items-center justify-center rounded-xl border border-base-800 bg-base-900 text-base-600">
+        <div className="mb-5 flex size-12 items-center justify-center border border-line bg-sunken text-ink-subtle">
           {icon}
         </div>
       ) : null}
-      <h3 className="text-lead font-semibold tracking-tight text-base-200">{title}</h3>
+      <h3 className="text-lead font-semibold tracking-tight text-ink">{title}</h3>
       {children ? (
-        <p className="mt-2 max-w-[54ch] text-detail leading-relaxed text-base-500">
+        <p className="mt-2 max-w-[54ch] text-detail leading-relaxed text-ink-muted">
           {children}
         </p>
       ) : null}
-      {action ? <div className="mt-5">{action}</div> : null}
+      {action ? <div className="mt-6">{action}</div> : null}
     </div>
   );
 }
 
 // --- Stat -------------------------------------------------------------------
 
+const TONE_FIGURE: Record<Tone, string> = {
+  neutral: "text-ink",
+  accent: "text-accent-ink",
+  gain: "text-gain",
+  loss: "text-loss",
+  warn: "text-warn",
+  info: "text-info",
+};
+
+/**
+ * One measured number. The figure is set in the serif — it is the thing on the
+ * page worth reading, and a serif numeral carries more weight than the same
+ * number in the interface sans.
+ */
 export function Stat({
   label,
   value,
@@ -332,24 +399,13 @@ export function Stat({
   hint?: ReactNode;
   tone?: Tone;
 }) {
-  const color: Record<Tone, string> = {
-    neutral: "text-base-100",
-    ember: "text-ember-400",
-    ok: "text-ok-400",
-    warn: "text-warn-500",
-    danger: "text-danger-400",
-    info: "text-info-500",
-    violet: "text-violet-500",
-  };
   return (
     <div className={cn("py-5", SECTION_X)}>
-      <div className="text-meta font-medium uppercase tracking-[0.08em] text-base-500">
-        {label}
-      </div>
-      <div className={cn("mt-2 text-figure font-semibold tabular-nums", color[tone])}>
+      <div className="text-meta font-medium tracking-wide text-ink-muted">{label}</div>
+      <div className={cn("mt-2 font-serif text-figure tabular-nums", TONE_FIGURE[tone])}>
         {value}
       </div>
-      {hint ? <div className="mt-2 text-detail text-base-500">{hint}</div> : null}
+      {hint ? <div className="mt-2 text-detail text-ink-subtle">{hint}</div> : null}
     </div>
   );
 }
@@ -358,15 +414,16 @@ export function Stat({
 
 /**
  * A link that looks like the primary action. Buttons that *do* something are
- * written where they act; this is the shape they all share.
+ * written where they act; this is the shape they all share. Radius lives here
+ * and nowhere else — it is the signal that a thing is pressable.
  */
 export function ActionStyle({
   variant = "primary",
 }: { variant?: "primary" | "ghost" } = {}): string {
   return cn(
-    "inline-flex items-center justify-center gap-2 rounded-md px-3 py-2 text-body font-semibold transition",
+    "inline-flex items-center justify-center gap-2 rounded-md px-3.5 py-2 text-body font-medium transition",
     variant === "primary"
-      ? "bg-ember-500 text-base-950 hover:bg-ember-400"
-      : "border border-base-800 text-base-300 hover:border-base-700 hover:text-base-100",
+      ? "bg-accent text-on-accent hover:bg-accent-hover"
+      : "border border-line-strong text-ink hover:bg-sunken",
   );
 }

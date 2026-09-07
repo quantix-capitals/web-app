@@ -12,6 +12,7 @@ import {
   SectionHeader,
   Stat,
   StatBand,
+  Tabs,
 } from "@/components/ui/primitives";
 import { ConnectZerodhaButton } from "@/components/zerodha/connect-button";
 import { cn, formatMoney, formatPercent, formatRelative, moveTone } from "@/lib/format";
@@ -51,7 +52,7 @@ function Book() {
 
   if (!connected) {
     return (
-      <div className="console-ground">
+      <div className="bg-canvas">
         <PageHeader
           title="Portfolio"
           subtitle="Every position you hold, what it cost, and what it is worth now."
@@ -64,10 +65,10 @@ function Book() {
               title="Zerodha is not configured"
             >
               This build has no Kite credentials. Create an app at developers.kite.trade,
-              set its redirect URL to <code className="text-base-300">/zerodha/callback</code>,
-              and put <code className="text-base-300">KITE_API_KEY</code> and{" "}
-              <code className="text-base-300">KITE_API_SECRET</code> in{" "}
-              <code className="text-base-300">apps/web/.env.local</code>.
+              set its redirect URL to <code className="text-ink">/zerodha/callback</code>,
+              and put <code className="text-ink">KITE_API_KEY</code> and{" "}
+              <code className="text-ink">KITE_API_SECRET</code> in{" "}
+              <code className="text-ink">apps/web/.env.local</code>.
             </EmptyState>
           ) : (
             <EmptyState
@@ -96,17 +97,17 @@ function Book() {
   const bookValue = equityTotals.marketValue + mfTotals.marketValue;
 
   return (
-    <div className="console-ground">
+    <div className="bg-canvas">
       <PageHeader
         title="Portfolio"
         subtitle={
           <>
             Connected to Zerodha as{" "}
-            <span className="text-base-300">
+            <span className="text-ink">
               {connection?.session.user_name ?? connection?.session.user_id}
             </span>
             {" · book "}
-            <span className="text-base-300 tabular-nums">{formatMoney(bookValue)}</span>
+            <span className="text-ink tabular-nums">{formatMoney(bookValue)}</span>
             {connection?.synced_at ? ` · synced ${formatRelative(connection.synced_at)}` : null}
           </>
         }
@@ -133,7 +134,7 @@ function Book() {
 
       {error ? (
         <Section>
-          <div className="flex flex-wrap items-center gap-3 px-6 py-3 text-detail text-danger-400">
+          <div className="flex flex-wrap items-center gap-3 px-6 py-3 text-detail text-loss">
             <span>{error}</span>
             {expired ? (
               <ConnectZerodhaButton variant="ghost" label="Reconnect" className="py-1" />
@@ -204,7 +205,7 @@ function Book() {
               subtitle={`${mfTotals.count} ${mfTotals.count === 1 ? "fund" : "funds"} held through Coin.`}
             />
             {mfError ? (
-              <div className="px-6 py-3 text-detail text-warn-500">
+              <div className="px-6 py-3 text-detail text-warn">
                 Equity loaded, but Zerodha did not return mutual funds: {mfError}
               </div>
             ) : null}
@@ -222,51 +223,8 @@ function Book() {
   );
 }
 
-// --- Tabs -------------------------------------------------------------------
-
+/** Which side of the book is on screen. The tab strip itself lives in primitives. */
 type TabId = "equity" | "mf";
-
-/**
- * Two views of the same book. A tab strip rather than a switch: these are peers,
- * not an on/off state, and there is room for a third asset class later.
- */
-function Tabs({
-  active,
-  onChange,
-  tabs,
-}: {
-  active: TabId;
-  onChange: (id: TabId) => void;
-  tabs: Array<{ id: TabId; label: string; count: number }>;
-}) {
-  return (
-    <div role="tablist" className="flex items-center gap-1 px-6 py-2">
-      {tabs.map((t) => {
-        const on = t.id === active;
-        return (
-          <button
-            key={t.id}
-            role="tab"
-            aria-selected={on}
-            type="button"
-            onClick={() => onChange(t.id)}
-            className={cn(
-              "flex items-center gap-2 rounded-md px-3 py-1.5 text-body font-medium transition",
-              on
-                ? "bg-base-850 text-base-100"
-                : "text-base-500 hover:bg-base-900 hover:text-base-300",
-            )}
-          >
-            {t.label}
-            <Badge tone={on ? "ember" : "neutral"} mono>
-              {t.count}
-            </Badge>
-          </button>
-        );
-      })}
-    </div>
-  );
-}
 
 function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
   // Biggest position first — the number that moves the book most should be read
@@ -281,8 +239,8 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] border-collapse text-body">
         <thead>
-          <tr className="border-b border-base-850 text-meta uppercase tracking-[0.08em] text-base-500">
-            <Th className="text-left">Symbol</Th>
+          <tr className="border-b border-line text-meta text-ink-muted">
+            <Th left>Symbol</Th>
             <Th>Qty</Th>
             <Th>Avg cost</Th>
             <Th>Last price</Th>
@@ -297,11 +255,11 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
             return (
               <tr
                 key={`${h.exchange}:${h.tradingsymbol}`}
-                className="border-b border-base-850 last:border-b-0 hover:bg-base-900/60"
+                className="border-b border-line last:border-b-0 hover:bg-sunken"
               >
-                <Td className="text-left">
+                <Td left>
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-base-100">{h.tradingsymbol}</span>
+                    <span className="font-medium text-ink">{h.tradingsymbol}</span>
                     <Badge mono>{h.exchange}</Badge>
                     {h.t1_quantity > 0 ? <Badge tone="info">T1</Badge> : null}
                   </div>
@@ -309,7 +267,7 @@ function HoldingsTable({ holdings }: { holdings: KiteHolding[] }) {
                 <Td>{qty}</Td>
                 <Td>{formatMoney(h.average_price)}</Td>
                 <Td>{formatMoney(h.last_price)}</Td>
-                <Td className="text-base-100">{formatMoney(qty * h.last_price)}</Td>
+                <Td className="text-ink">{formatMoney(qty * h.last_price)}</Td>
                 <Td tone={moveTone(h.day_change)}>
                   {formatPercent(h.day_change_percentage / 100)}
                 </Td>
@@ -336,8 +294,8 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
     <div className="overflow-x-auto">
       <table className="w-full min-w-[720px] border-collapse text-body">
         <thead>
-          <tr className="border-b border-base-850 text-meta uppercase tracking-[0.08em] text-base-500">
-            <Th className="text-left">Fund</Th>
+          <tr className="border-b border-line text-meta text-ink-muted">
+            <Th left>Fund</Th>
             <Th>Units</Th>
             <Th>Avg NAV</Th>
             <Th>Last NAV</Th>
@@ -349,12 +307,12 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
           {rows.map((h) => (
             <tr
               key={`${h.folio ?? "—"}:${h.tradingsymbol}`}
-              className="border-b border-base-850 last:border-b-0 hover:bg-base-900/60"
+              className="border-b border-line last:border-b-0 hover:bg-sunken"
             >
-              <Td className="text-left">
-                <div className="max-w-[42ch] font-medium text-base-100">{h.fund}</div>
+              <Td left>
+                <div className="max-w-[42ch] font-medium text-ink">{h.fund}</div>
                 {h.folio ? (
-                  <div className="mt-0.5 font-mono text-meta text-base-600">
+                  <div className="mt-0.5 font-mono text-meta text-ink-subtle">
                     Folio {h.folio}
                   </div>
                 ) : null}
@@ -363,7 +321,7 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
               <Td>{h.quantity.toLocaleString("en-IN", { maximumFractionDigits: 3 })}</Td>
               <Td>{formatMoney(h.average_price)}</Td>
               <Td>{formatMoney(h.last_price)}</Td>
-              <Td className="text-base-100">{formatMoney(h.quantity * h.last_price)}</Td>
+              <Td className="text-ink">{formatMoney(h.quantity * h.last_price)}</Td>
               <Td tone={moveTone(h.pnl)}>{formatMoney(h.pnl)}</Td>
             </tr>
           ))}
@@ -373,11 +331,20 @@ function MfTable({ holdings }: { holdings: KiteMfHolding[] }) {
   );
 }
 
-function Th({ children, className }: { children: React.ReactNode; className?: string }) {
+/**
+ * Figures are right-aligned so decimal points stack; the one label column is
+ * left. Alignment is a prop rather than a class the caller passes, because
+ * `cn("text-right", "text-left")` emits both and the winner is decided by the
+ * order Tailwind wrote them into the stylesheet, not the order given here.
+ */
+function Th({ children, left }: { children: React.ReactNode; left?: boolean }) {
   return (
     <th
       scope="col"
-      className={cn("px-3 py-2 text-right font-medium first:pl-6 last:pr-6", className)}
+      className={cn(
+        "px-3 py-2.5 font-medium tracking-wide first:pl-6 last:pr-6",
+        left ? "text-left" : "text-right",
+      )}
     >
       {children}
     </th>
@@ -388,17 +355,20 @@ function Td({
   children,
   className,
   tone,
+  left,
 }: {
   children: React.ReactNode;
   className?: string;
-  tone?: "ok" | "danger" | "neutral";
+  tone?: "gain" | "loss" | "neutral";
+  left?: boolean;
 }) {
   const color =
-    tone === "ok" ? "text-ok-400" : tone === "danger" ? "text-danger-400" : "text-base-300";
+    tone === "gain" ? "text-gain" : tone === "loss" ? "text-loss" : "text-ink-muted";
   return (
     <td
       className={cn(
-        "px-3 py-2.5 text-right tabular-nums first:pl-6 last:pr-6",
+        "px-3 py-3 tabular-nums first:pl-6 last:pr-6",
+        left ? "text-left" : "text-right",
         color,
         className,
       )}

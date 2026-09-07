@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Wordmark } from "@/components/brand";
-import { Badge, Dot } from "@/components/ui/primitives";
+import { Dot } from "@/components/ui/primitives";
 import { cn } from "@/lib/format";
 import { IconAgent, IconChevron, IconMenu } from "./nav-icons";
 import { isActive, NAV, type NavItem } from "./nav";
@@ -18,6 +18,9 @@ import {
 /**
  * The persistent chrome: a rail that collapses to icons and expands to labels,
  * plus a mobile drawer over the same nav. Every route renders inside it.
+ *
+ * The rail sits on the sunken ground and the content on canvas, so the two are
+ * told apart by surface as well as by the rule between them.
  */
 export function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -47,8 +50,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* ---------- desktop rail ---------- */}
       <aside
         className={cn(
-          "hidden shrink-0 flex-col border-r border-base-850 bg-base-950/70 backdrop-blur transition-[width] duration-200 ease-out md:flex",
-          collapsed ? "w-[60px]" : "w-[228px]",
+          "hidden shrink-0 flex-col border-r border-line bg-sunken transition-[width] duration-200 ease-out md:flex",
+          collapsed ? "w-[64px]" : "w-[232px]",
         )}
       >
         <SidebarBody collapsed={collapsed} pathname={pathname} onToggle={toggle} />
@@ -60,9 +63,9 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <button
             aria-label="Close navigation"
             onClick={() => setDrawer(false)}
-            className="absolute inset-0 bg-base-950/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-ink/25 backdrop-blur-sm"
           />
-          <aside className="animate-stream-in absolute inset-y-0 left-0 flex w-[228px] flex-col border-r border-base-850 bg-base-950">
+          <aside className="animate-rise absolute inset-y-0 left-0 flex w-[240px] flex-col border-r border-line bg-sunken">
             <SidebarBody
               collapsed={false}
               pathname={pathname}
@@ -72,19 +75,19 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       ) : null}
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden bg-canvas">
         {/* Mobile-only bar — the rail is the desktop equivalent. */}
-        <div className="flex shrink-0 items-center gap-3 border-b border-base-850 px-3 py-2.5 md:hidden">
+        <div className="flex shrink-0 items-center gap-3 border-b border-line px-4 py-3 md:hidden">
           <button
             onClick={() => setDrawer(true)}
             aria-label="Open navigation"
-            className="rounded-md p-1.5 text-base-400 hover:bg-base-850 hover:text-base-100"
+            className="rounded-md p-1.5 text-ink-muted hover:bg-sunken hover:text-ink"
           >
             <IconMenu />
           </button>
           <Wordmark />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto">{children}</div>
+        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );
@@ -105,7 +108,7 @@ function SidebarBody({
     <>
       <div
         className={cn(
-          "flex h-[57px] shrink-0 items-center border-b border-base-850",
+          "flex h-[57px] shrink-0 items-center border-b border-line",
           collapsed ? "justify-center px-2" : "justify-between px-4",
         )}
       >
@@ -115,7 +118,7 @@ function SidebarBody({
             onClick={onToggle}
             aria-label="Collapse sidebar"
             title="Collapse sidebar (⌘B)"
-            className="rounded-md p-1 text-base-600 transition hover:bg-base-850 hover:text-base-200"
+            className="rounded-md p-1 text-ink-subtle transition hover:bg-canvas hover:text-ink"
           >
             <IconChevron className="size-4" />
           </button>
@@ -126,9 +129,9 @@ function SidebarBody({
         {NAV.map((section, i) => (
           <div key={section.title} className="mb-4 last:mb-0">
             {collapsed ? (
-              i > 0 ? <div className="mx-2 mb-2 h-px bg-base-850" /> : null
+              i > 0 ? <div className="mx-2 mb-2 h-px bg-line" /> : null
             ) : (
-              <div className="mb-1 px-2.5 text-[10px] font-medium uppercase tracking-[0.14em] text-base-600">
+              <div className="mb-1 px-2.5 text-meta font-medium tracking-wide text-ink-subtle">
                 {section.title}
               </div>
             )}
@@ -150,13 +153,13 @@ function SidebarBody({
 
       {/* The agent is the product, so its state lives in the chrome — visible from
           every route, not just the page that started a scan. */}
-      <div className="shrink-0 border-t border-base-850 p-2">
+      <div className="shrink-0 border-t border-line p-2">
         {collapsed ? (
           <div className="flex flex-col items-center gap-1.5">
             <Link
               href="/momentum"
               title="Run a momentum scan"
-              className="flex size-9 items-center justify-center rounded-md bg-ember-500 text-base-950 transition hover:bg-ember-400"
+              className="flex size-9 items-center justify-center rounded-md bg-accent text-on-accent transition hover:bg-accent-hover"
             >
               <IconAgent className="size-4" />
             </Link>
@@ -165,7 +168,7 @@ function SidebarBody({
                 onClick={onToggle}
                 aria-label="Expand sidebar"
                 title="Expand sidebar (⌘B)"
-                className="rounded-md p-1.5 text-base-600 transition hover:bg-base-850 hover:text-base-200"
+                className="rounded-md p-1.5 text-ink-subtle transition hover:bg-canvas hover:text-ink"
               >
                 <IconChevron className="size-4 rotate-180" />
               </button>
@@ -176,12 +179,12 @@ function SidebarBody({
             <Link
               href="/momentum"
               onClick={onNavigate}
-              className="flex items-center justify-center gap-2 rounded-md bg-ember-500 px-3 py-2 text-[13px] font-semibold text-base-950 transition hover:bg-ember-400"
+              className="flex items-center justify-center gap-2 rounded-md bg-accent px-3 py-2 text-body font-medium text-on-accent transition hover:bg-accent-hover"
             >
-              <IconAgent className="size-3.5" />
+              <IconAgent className="size-4" />
               Run a scan
             </Link>
-            <div className="mt-2 flex items-center gap-2 px-1.5 py-1 text-[11px] text-base-600">
+            <div className="mt-2 flex items-center gap-2 px-1.5 py-1 text-meta text-ink-subtle">
               <Dot tone="neutral" />
               <span>Agent offline</span>
               <span className="ml-auto font-mono">v0.1</span>
@@ -212,24 +215,24 @@ function NavLink({
       title={collapsed ? item.label : undefined}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group relative flex items-center rounded-lg text-[13px] transition",
+        "group relative flex items-center rounded-md text-body transition",
         collapsed ? "justify-center px-0 py-2" : "gap-2.5 px-2.5 py-2",
         active
-          ? "bg-ember-500/12 text-ember-300"
-          : "text-base-400 hover:bg-base-850/70 hover:text-base-100",
+          ? "bg-accent-soft font-medium text-accent-ink"
+          : "text-ink-muted hover:bg-canvas hover:text-ink",
       )}
     >
       {active ? (
-        <span className="absolute inset-y-1.5 left-0 w-0.5 rounded-full bg-ember-500" />
+        <span className="absolute inset-y-1.5 left-0 w-0.5 bg-accent" />
       ) : null}
-      <Icon className={cn("size-[18px] shrink-0", active && "text-ember-400")} />
+      <Icon className={cn("size-[18px] shrink-0", active && "text-accent")} />
       {collapsed ? null : (
         <>
           <span className="truncate">{item.label}</span>
           {item.badge ? (
-            <Badge tone={active ? "ember" : "neutral"} className="ml-auto" mono>
+            <span className="ml-auto text-meta tabular-nums text-ink-subtle">
               {item.badge}
-            </Badge>
+            </span>
           ) : null}
         </>
       )}
