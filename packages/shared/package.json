@@ -1,0 +1,10 @@
+{
+  "name": "@stealth/shared",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure types and symbol plumbing shared by the web app and the API server. No runtime deps, no I/O — anything that touches the network belongs in apps/api.",
+  "exports": {
+    ".": "./src/index.ts"
+  }
+}

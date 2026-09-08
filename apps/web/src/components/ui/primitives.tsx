@@ -1,7 +1,7 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/format";
-import { googleFinanceUrl } from "@/lib/market/symbols";
+import { googleFinanceUrl } from "@stealth/shared";
 import type { Tone } from "@/lib/types";
 
 export type { Tone };
@@ -482,7 +482,7 @@ export function ActionStyle({
 export function BackLink({ href, label }: { href: string; label: string }) {
   return (
     <Link
-      href={href}
+      to={href}
       aria-label={label}
       title={label}
       className="-ml-1.5 inline-flex size-7 shrink-0 items-center justify-center rounded-md text-ink-subtle transition hover:bg-sunken hover:text-ink"
@@ -600,3 +600,10 @@ export function SymbolLink({
     </a>
   );
 }
+
+/*
+ * `PageSpinner` used to live here — a centred "Loading…" line. It has been
+ * replaced by the skeletons in `ui/skeleton.tsx`, which keep the same principle
+ * (no spinner on an empty page; the shell is already drawn) but hold the shape
+ * of the content as well as its place, so nothing moves when the data lands.
+ */

@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Theme preference, kept outside React for the same reason the sidebar's is:
  * `useSyncExternalStore` can render the server snapshot during hydration and
@@ -29,10 +27,6 @@ export function getSnapshot(): Theme {
   return cached;
 }
 
-/** Server render (and the hydration pass) always assumes the system default. */
-export function getServerSnapshot(): Theme {
-  return "system";
-}
 
 export function setTheme(next: Theme) {
   cached = next;

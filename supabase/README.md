@@ -17,6 +17,33 @@ supabase link --project-ref <ref>
 supabase db push
 ```
 
+## The edge functions
+
+Two, and only two — see the note in the root README about what earns a place
+here. `functions/_shared/` holds what both use.
+
+```bash
+supabase functions serve                    # local, on :54321
+supabase functions deploy market zerodha
+```
+
+Both check the caller themselves rather than relying on `verify_jwt`, because the
+anon key is a valid project JWT that belongs to nobody. That is why
+`config.toml` sets `verify_jwt = false` for each: the check moved inside, where
+`zerodha`'s `?op=login` can be exempted (a top-level browser redirect cannot carry
+a bearer token).
+
+Their secrets are set on the project, never in a `.env` the browser can reach:
+
+```bash
+supabase secrets set KITE_API_KEY=... KITE_API_SECRET=...
+supabase secrets set WEB_ORIGIN=https://your-app  ALLOWED_ORIGINS=https://your-app
+```
+
+The Kite app's registered redirect URL must be `{WEB_ORIGIN}/zerodha/callback`.
+Locally that is `http://localhost:3000/zerodha/callback` — which is why the dev
+server pins :3000 with `strictPort` rather than taking whatever is free.
+
 ## What the schema assumes
 
 - **RLS is on for every table**, and it is doing real work — the web app talks to

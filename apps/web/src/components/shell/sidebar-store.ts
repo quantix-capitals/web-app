@@ -1,5 +1,3 @@
-"use client";
-
 /**
  * Sidebar collapse state lives outside React so it can be read from localStorage
  * without a setState-in-effect: `useSyncExternalStore` renders the server snapshot
@@ -29,10 +27,6 @@ export function getSnapshot(): boolean {
   return cached;
 }
 
-/** Server render (and the hydration pass) always starts expanded. */
-export function getServerSnapshot(): boolean {
-  return false;
-}
 
 export function setCollapsed(next: boolean) {
   cached = next;
