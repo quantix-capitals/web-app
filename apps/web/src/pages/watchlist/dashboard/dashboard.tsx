@@ -60,11 +60,20 @@ import { HoldingSparklines, HoldingsTable } from "./holdings";
 
 export function Dashboard({ list }: { list: WatchlistSummary }) {
   const [range, setRange] = useState<RangeId>("all");
-  const { analytics, isPending, isError, error, asOf, missing, refetch } = useBasketAnalytics(
-    list.id,
-    list.items,
-    range,
-  );
+  // `range` is what was asked for; `effective` is what the loaded history could
+  // honour. The strip highlights the second, so the label always describes the
+  // chart underneath it.
+  const {
+    analytics,
+    isPending,
+    isError,
+    error,
+    asOf,
+    missing,
+    ranges,
+    range: effective,
+    refetch,
+  } = useBasketAnalytics(list.id, list.items, range);
 
   if (!list.items.length) {
     return (
@@ -113,7 +122,8 @@ export function Dashboard({ list }: { list: WatchlistSummary }) {
   return (
     <div>
       <Controls
-        range={range}
+        range={effective}
+        ranges={ranges}
         onRange={setRange}
         asOf={asOf}
         struck={list.createdAt}
@@ -121,7 +131,7 @@ export function Dashboard({ list }: { list: WatchlistSummary }) {
         analytics={analytics}
       />
 
-      <Headline a={analytics} range={range} />
+      <Headline a={analytics} range={effective} />
       <Section className="bg-sunken">
         <RiskMetrics a={analytics} />
       </Section>
@@ -192,6 +202,7 @@ export function Dashboard({ list }: { list: WatchlistSummary }) {
  */
 function Controls({
   range,
+  ranges,
   onRange,
   asOf,
   struck,
@@ -199,6 +210,7 @@ function Controls({
   analytics,
 }: {
   range: RangeId;
+  ranges: RangeId[];
   onRange: (next: RangeId) => void;
   asOf: string | null;
   struck: string;
@@ -213,22 +225,32 @@ function Controls({
       )}
     >
       <div className="flex items-center gap-1" role="group" aria-label="Date range">
-        {RANGES.map((r) => (
-          <button
-            key={r.id}
-            type="button"
-            onClick={() => onRange(r.id)}
-            aria-pressed={r.id === range}
-            className={cn(
-              "rounded-md px-2.5 py-1.5 text-meta font-medium transition",
-              r.id === range
-                ? "bg-accent-soft text-accent-ink"
-                : "text-ink-muted hover:bg-canvas hover:text-ink",
-            )}
-          >
-            {r.label}
-          </button>
-        ))}
+        {RANGES.map((r) => {
+          // A range the basket is too young for is offered as disabled rather
+          // than silently falling back to the whole series — a button that
+          // moves the highlight and changes nothing else reads as a bug.
+          const available = ranges.includes(r.id);
+          return (
+            <button
+              key={r.id}
+              type="button"
+              onClick={() => onRange(r.id)}
+              disabled={!available}
+              aria-pressed={r.id === range}
+              title={available ? undefined : "Not enough history yet"}
+              className={cn(
+                "rounded-md px-2.5 py-1.5 text-meta font-medium transition",
+                !available
+                  ? "cursor-not-allowed text-ink-subtle/50"
+                  : r.id === range
+                    ? "bg-accent-soft text-accent-ink"
+                    : "text-ink-muted hover:bg-canvas hover:text-ink",
+              )}
+            >
+              {r.label}
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex items-center gap-4 text-meta text-ink-subtle">

@@ -24,6 +24,7 @@ import { fetchHistory } from "@/services/market-service";
 import {
   BENCHMARK_SYMBOL,
   analyse,
+  availableRanges,
   buildSeries,
   rangeStart,
   type BasketAnalytics,
@@ -50,6 +51,10 @@ export interface BasketAnalyticsResult {
   asOf: string | null;
   /** Symbols Yahoo had no bars for at all. */
   missing: string[];
+  /** The ranges the loaded history can honour. Always contains "all". */
+  ranges: RangeId[];
+  /** The range actually analysed — the one asked for, or "all" if it can't be honoured. */
+  range: RangeId;
   refetch: () => void;
 }
 
@@ -111,10 +116,19 @@ export function useBasketAnalytics(
     return buildSeries(items, holdings, benchmark, live.quotes);
   }, [query.data, items, live.quotes]);
 
+  const ranges = useMemo<RangeId[]>(
+    () => (series ? availableRanges(series.dates) : ["all"]),
+    [series],
+  );
+
+  // Clamped rather than merely ignored: a range the history cannot honour would
+  // otherwise leave the strip highlighting "1M" over the whole series.
+  const effective: RangeId = ranges.includes(range) ? range : "all";
+
   const analytics = useMemo(() => {
     if (!series) return null;
-    return analyse(series, rangeStart(series.dates, range));
-  }, [series, range]);
+    return analyse(series, rangeStart(series.dates, effective));
+  }, [series, effective]);
 
   return {
     analytics,
@@ -125,6 +139,8 @@ export function useBasketAnalytics(
     // from it, so it is the timestamp that describes what is on screen.
     asOf: live.asOf ?? query.data?.asOf ?? null,
     missing: query.data?.missing.filter((s) => s !== BENCHMARK_SYMBOL) ?? [],
+    ranges,
+    range: effective,
     refetch: () => {
       void query.refetch();
       live.refresh();

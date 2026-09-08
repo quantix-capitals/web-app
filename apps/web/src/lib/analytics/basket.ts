@@ -501,6 +501,19 @@ export function rangeStart(dates: number[], range: RangeId): number {
   return index;
 }
 
+/**
+ * The ranges this spine can actually honour.
+ *
+ * A range that starts at the first session is not a window — it is the whole
+ * series with a shorter label on it. Offering one anyway is what made the
+ * buttons look broken: on a basket a few days old the highlight moved, every
+ * figure stayed put, and the strip went on claiming "1M" over a chart showing
+ * everything. "Since entry" is always honourable and always listed.
+ */
+export function availableRanges(dates: number[]): RangeId[] {
+  return RANGES.filter((r) => !r.days || rangeStart(dates, r.id) > 0).map((r) => r.id);
+}
+
 // --- the analysis ----------------------------------------------------------------
 
 /**
