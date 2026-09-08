@@ -23,7 +23,8 @@ import {
 } from "@/services/watchlist-service";
 import { basketsKey } from "./keys";
 import { useAuth } from "@/context/auth-context";
-import { ActionStyle, PageSpinner } from "@/components/ui/primitives";
+import { ActionStyle } from "@/components/ui/primitives";
+import { SkeletonCell, SkeletonRows } from "@/components/ui/skeleton";
 import { listPnl } from "@/lib/watchlist/pnl";
 import type { WatchlistItemView, WatchlistSummary } from "@/lib/watchlist/types";
 import { NewBasketButton } from "./new-basket-button";
@@ -62,7 +63,10 @@ export function Watchlist() {
     ],
   });
 
-  if (loading) return <PageSpinner />;
+  // Both waits show the same thing, because from the reader's side they are the
+  // same wait: the page's own text is already known, and only the baskets under
+  // it are outstanding.
+  if (loading) return <BasketsLoading />;
 
   if (!user) {
     return (
@@ -83,7 +87,7 @@ export function Watchlist() {
     );
   }
 
-  if (mine.isPending || shared.isPending) return <PageSpinner />;
+  if (mine.isPending || shared.isPending) return <BasketsLoading />;
 
   const mineData = mine.data ?? [];
   const sharedData = shared.data ?? [];
@@ -104,6 +108,60 @@ export function Watchlist() {
   }
 
   return <ListsView mine={mineData} shared={sharedData} />;
+}
+
+/**
+ * The page before its baskets arrive.
+ *
+ * The header and the column names are real — they are static text this page has
+ * always known — so what actually changes when the data lands is the rows, and
+ * they land into rows already the right height. The tab strip is left out
+ * rather than drawn empty: its counts are the unknown, and a tab with a bar
+ * where its number goes is harder to read than no tab at all for the half
+ * second it lasts.
+ */
+function BasketsLoading() {
+  return (
+    <BasketsShell>
+      <div role="status" aria-label="Loading baskets">
+        <Table minWidth="min-w-215">
+          <HeadRow>
+            <Th align="left" first grow>
+              Basket
+            </Th>
+            <Th align="left" tight>
+              Holdings
+            </Th>
+            <Th tight>Struck</Th>
+            <Th tight>Value</Th>
+            <Th tight>Day</Th>
+            <Th tight>Gain / loss</Th>
+            <Th last tight srOnly>
+              Actions
+            </Th>
+          </HeadRow>
+          <SkeletonRows
+            rows={3}
+            columns={[
+              {
+                align: "left",
+                first: true,
+                grow: true,
+                width: ["w-40", "w-28", "w-52"],
+                sub: "w-64 max-w-full",
+              },
+              { align: "left", tight: true, width: "w-36" },
+              { tight: true, width: "w-16", sub: "w-10" },
+              { tight: true, width: "w-20" },
+              { tight: true, width: "w-14" },
+              { tight: true, width: "w-20", sub: "w-10" },
+              { last: true, tight: true, width: null },
+            ]}
+          />
+        </Table>
+      </div>
+    </BasketsShell>
+  );
 }
 
 /** The page's header and ground, around whichever empty state applies. */
@@ -339,8 +397,10 @@ function ListRow({
   const pnl = listPnl(list.items, quotes);
   const href = `/watchlist/${list.id}`;
   // "Nothing priced yet" and "still fetching" are different facts, and only one
-  // of them is permanent.
-  const blank = loading && pnl.pricedCount === 0 && list.items.length > 0 ? "Loading…" : "—";
+  // of them is permanent. A bar says the second one without occupying a
+  // different width from the figure that replaces it, which the word did.
+  const blank =
+    loading && pnl.pricedCount === 0 && list.items.length > 0 ? <SkeletonCell /> : "—";
 
   function onDelete() {
     if (!confirming) {

@@ -3,7 +3,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppShell } from "@/components/shell/app-shell";
 import { AuthProvider } from "@/context/auth-context";
-import { PageSpinner } from "@/components/ui/primitives";
+import { PageSkeleton } from "@/components/ui/skeleton";
 
 /**
  * Routes are lazy so the first load ships the shell and nothing else. The heavy
@@ -50,7 +50,7 @@ export function App() {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <AppShell>
-            <Suspense fallback={<PageSpinner />}>
+            <Suspense fallback={<PageSkeleton />}>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/watchlist" element={<Watchlist />} />

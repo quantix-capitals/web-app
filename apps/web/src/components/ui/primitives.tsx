@@ -601,17 +601,9 @@ export function SymbolLink({
   );
 }
 
-/**
- * What a route shows while its chunk or its first query is in flight.
- *
- * Deliberately not a spinner in the middle of an empty page: the shell is
- * already drawn around this, so a quiet line on the page's own ground reads as
- * "loading" without the layout jumping when the content lands.
+/*
+ * `PageSpinner` used to live here — a centred "Loading…" line. It has been
+ * replaced by the skeletons in `ui/skeleton.tsx`, which keep the same principle
+ * (no spinner on an empty page; the shell is already drawn) but hold the shape
+ * of the content as well as its place, so nothing moves when the data lands.
  */
-export function PageSpinner() {
-  return (
-    <div className="flex min-h-[40vh] items-center justify-center bg-canvas">
-      <span className="text-meta text-ink-subtle">Loading…</span>
-    </div>
-  );
-}

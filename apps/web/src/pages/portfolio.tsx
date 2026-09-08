@@ -81,11 +81,12 @@ function Book() {
               icon={<IconPortfolio className="size-5" />}
               title="Zerodha is not configured"
             >
-              This build has no Kite credentials. Create an app at developers.kite.trade,
-              set its redirect URL to <code className="text-ink">/zerodha/callback</code>,
-              and put <code className="text-ink">KITE_API_KEY</code> and{" "}
-              <code className="text-ink">KITE_API_SECRET</code> in{" "}
-              <code className="text-ink">apps/web/.env.local</code>.
+              The <code className="text-ink">zerodha</code> function has no Kite
+              credentials. Create an app at developers.kite.trade, set its redirect URL
+              to <code className="text-ink">/zerodha/callback</code>, then set{" "}
+              <code className="text-ink">KITE_API_KEY</code> and{" "}
+              <code className="text-ink">KITE_API_SECRET</code> as edge function secrets
+              — they sign the session checksum, so they can never reach this page.
             </EmptyState>
           ) : (
             <EmptyState
