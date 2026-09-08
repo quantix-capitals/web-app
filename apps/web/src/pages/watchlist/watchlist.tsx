@@ -226,7 +226,7 @@ function ListsView({
             onChange={setTab}
             tabs={[
               { id: "mine", label: "Your baskets", count: mine.length },
-              { id: "public", label: "Shared with you", count: shared.length },
+              { id: "public", label: "Public baskets", count: shared.length },
             ]}
           />
           <Totals totals={totals} />
