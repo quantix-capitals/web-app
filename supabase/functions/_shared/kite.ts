@@ -22,12 +22,45 @@ export interface KiteCredentials {
  * Credentials come from the environment and stay there. Returns null rather than
  * throwing so a route can answer with a readable "not configured" instead of a
  * 500 — this is the state the app ships in.
+ *
+ * There are two possible pairs, because a Kite app has exactly one registered
+ * redirect URL and a developer needs the login to come back to localhost while
+ * production needs it to come back to the deployed site. So a second Kite app
+ * covers development, and which pair applies is decided by the origin the call
+ * came from — not by a build flag, because one deployed function serves both.
+ *
+ * The dev pair is optional. With `KITE_API_KEY_DEV` unset, every origin gets the
+ * main pair and the behaviour is exactly what it was before this existed.
  */
-export function getCredentials(): KiteCredentials | null {
-  const apiKey = Deno.env.get("KITE_API_KEY");
-  const apiSecret = Deno.env.get("KITE_API_SECRET");
+export function getCredentials(origin?: string | null): KiteCredentials | null {
+  if (isDevOrigin(origin)) {
+    const dev = pair("KITE_API_KEY_DEV", "KITE_API_SECRET_DEV");
+    if (dev) return dev;
+  }
+  return pair("KITE_API_KEY", "KITE_API_SECRET");
+}
+
+function pair(keyVar: string, secretVar: string): KiteCredentials | null {
+  const apiKey = Deno.env.get(keyVar);
+  const apiSecret = Deno.env.get(secretVar);
   if (!apiKey || !apiSecret) return null;
   return { apiKey, apiSecret };
+}
+
+/**
+ * A developer's browser, by hostname rather than by an allowlist to maintain.
+ * Getting this wrong is not a security question — both Kite apps belong to the
+ * same person, and the secret never leaves this function either way — it just
+ * decides which app's login the user is sent to.
+ */
+function isDevOrigin(origin?: string | null): boolean {
+  if (!origin) return false;
+  try {
+    const { hostname } = new URL(origin);
+    return hostname === "localhost" || hostname === "127.0.0.1" || hostname === "[::1]";
+  } catch {
+    return false;
+  }
 }
 
 export function loginUrl(apiKey: string): string {

@@ -34,6 +34,18 @@ function webOrigin(): string {
   return (Deno.env.get("WEB_ORIGIN") ?? "http://localhost:3000").replace(/\/$/, "");
 }
 
+/**
+ * Which site is calling, and therefore which Kite app to use.
+ *
+ * `session` and `holdings` are cross-origin fetches, so the browser attaches an
+ * `Origin` header itself and it cannot be forgotten. `login` is a top-level
+ * navigation, which sends no such header, so the page passes `?origin=` instead
+ * — that is the one place this has to be spelled out by the caller.
+ */
+function callerOrigin(request: Request, url: URL): string | null {
+  return request.headers.get("origin") ?? url.searchParams.get("origin");
+}
+
 Deno.serve(async (request) => {
   const cors = corsHeadersFor(request);
   if (request.method === "OPTIONS") return new Response("ok", { headers: cors });
@@ -41,19 +53,21 @@ Deno.serve(async (request) => {
   const url = new URL(request.url);
   const op = url.searchParams.get("op");
 
+  const origin = callerOrigin(request, url);
+
   // `login` is a top-level browser navigation, not a fetch — there is no way to
   // attach a bearer token to it, and there is nothing to protect: it reveals
   // only the API key, which Kite shows to the user on the next screen anyway.
-  if (op === "login") return login();
+  if (op === "login") return login(origin);
 
   try {
     await requireUser(request);
 
     switch (op) {
       case "session":
-        return json(await session(request), 200, cors);
+        return json(await session(request, origin), 200, cors);
       case "holdings":
-        return json(await holdings(request), 200, cors);
+        return json(await holdings(request, origin), 200, cors);
       default:
         throw new HttpError("Unknown ?op= — expected login, session or holdings.", 400);
     }
@@ -68,18 +82,18 @@ Deno.serve(async (request) => {
  * sends the user back to the redirect URL registered on the Kite app — point
  * that at `{WEB_ORIGIN}/zerodha/callback`.
  */
-function login(): Response {
-  const creds = getCredentials();
+function login(origin: string | null): Response {
+  const creds = getCredentials(origin);
   const target = creds
     ? loginUrl(creds.apiKey)
     : // Back to where they clicked, with something the UI can explain.
-      `${webOrigin()}/portfolio?zerodha=not-configured`;
+      `${origin ?? webOrigin()}/portfolio?zerodha=not-configured`;
   return Response.redirect(target, 302);
 }
 
 /** Step two: trade the one-time request token for an access token. */
-async function session(request: Request) {
-  const creds = getCredentials();
+async function session(request: Request, origin: string | null) {
+  const creds = getCredentials(origin);
   if (!creds) throw new HttpError(NOT_CONFIGURED, 501);
 
   const requestToken = await field(request, "request_token");
@@ -97,8 +111,8 @@ async function session(request: Request) {
 }
 
 /** Holdings, proxied. */
-async function holdings(request: Request) {
-  const creds = getCredentials();
+async function holdings(request: Request, origin: string | null) {
+  const creds = getCredentials(origin);
   if (!creds) throw new HttpError(NOT_CONFIGURED, 501);
 
   const accessToken = await field(request, "access_token");
