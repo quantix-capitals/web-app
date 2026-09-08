@@ -13,7 +13,13 @@
 
 import YahooFinance from "npm:yahoo-finance2@^4.0.2";
 import { fromYahooSymbol, toYahooSymbol } from "../../../packages/shared/src/symbols.ts";
-import type { BaselinePrice, Quote, SymbolMatch } from "../../../packages/shared/src/types.ts";
+import type {
+  Bar,
+  BaselinePrice,
+  Quote,
+  SymbolHistory,
+  SymbolMatch,
+} from "../../../packages/shared/src/types.ts";
 
 // One module-level instance so the cookie/crumb Yahoo requires is fetched
 // once, not per call.
@@ -175,7 +181,7 @@ function otherExchangeSymbol(yahooSymbol: string): string | null {
   return null;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// deno-lint-ignore no-explicit-any
 function shapeQuote(raw: any, asOf: string): Quote {
   const price = raw.regularMarketPrice ?? null;
   const previousClose = raw.regularMarketPreviousClose ?? null;
@@ -224,27 +230,62 @@ export async function getCloseOn(yahooSymbol: string, isoDate: string): Promise<
   return typeof last.close === "number" ? last.close : null;
 }
 
-interface ChartBar {
+interface ChartBar extends Bar {
   date: Date;
   close: number | null;
 }
 
 async function fetchChart(yahooSymbol: string, period1: Date, period2: Date): Promise<ChartBar[]> {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // deno-lint-ignore no-explicit-any
     const result: any = await yf.chart(
       yahooSymbol,
       { period1, period2, interval: "1d" },
       NO_VALIDATE,
     );
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ((result?.quotes ?? []) as any[]).map((q) => ({ date: q.date, close: q.close }));
+    // deno-lint-ignore no-explicit-any
+    const quotes = (result?.quotes ?? []) as any[];
+    // An empty `quotes` from the library is indistinguishable here from a
+    // symbol Yahoo doesn't know, and the direct fetch below tells the two
+    // apart — so fall through to it rather than reporting "no history".
+    if (!quotes.length) return fetchChartDirect(yahooSymbol, period1, period2);
+    return quotes.map((q) => bar(q.date, q.open, q.high, q.low, q.close, q.adjclose, q.volume));
   } catch {
     // `&` in a symbol (e.g. "M&M.NS") is interpolated unencoded into the
     // chart endpoint's path by the library and can truncate the request.
     // Fall back to a direct, properly-encoded fetch of the same endpoint.
     return fetchChartDirect(yahooSymbol, period1, period2);
   }
+}
+
+/** One bar in both shapes at once — `date` for the local readers, `t` for the wire. */
+function bar(
+  date: Date,
+  o: unknown,
+  h: unknown,
+  l: unknown,
+  c: unknown,
+  ac: unknown,
+  v: unknown,
+): ChartBar {
+  const close = num(c);
+  return {
+    date,
+    close,
+    t: date.getTime(),
+    o: num(o),
+    h: num(h),
+    l: num(l),
+    c: close,
+    // Yahoo omits `adjclose` on some symbols (indices, most notably). The raw
+    // close is the honest fallback: an index has no splits to adjust for.
+    ac: num(ac) ?? close,
+    v: num(v),
+  };
+}
+
+function num(value: unknown): number | null {
+  return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
 async function fetchChartDirect(
@@ -256,27 +297,131 @@ async function fetchChartDirect(
     period1: String(Math.floor(period1.getTime() / 1000)),
     period2: String(Math.floor(period2.getTime() / 1000)),
     interval: "1d",
+    events: "div,splits",
   });
   const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(yahooSymbol)}?${params}`;
   const res = await fetch(url, { cache: "no-store" });
   if (!res.ok) return [];
 
+  type Column = Array<number | null> | undefined;
   const body = (await res.json()) as {
     chart?: {
       result?: Array<{
         timestamp?: number[];
-        indicators?: { quote?: Array<{ close?: Array<number | null> }> };
+        indicators?: {
+          quote?: Array<{
+            open?: Column;
+            high?: Column;
+            low?: Column;
+            close?: Column;
+            volume?: Column;
+          }>;
+          adjclose?: Array<{ adjclose?: Column }>;
+        };
       }>;
     };
   };
   const result = body.chart?.result?.[0];
   const timestamps = result?.timestamp ?? [];
-  const closes = result?.indicators?.quote?.[0]?.close ?? [];
+  const q = result?.indicators?.quote?.[0];
+  const adj = result?.indicators?.adjclose?.[0]?.adjclose;
 
-  return timestamps.map((ts, i) => ({
-    date: new Date(ts * 1000),
-    close: closes[i] ?? null,
-  }));
+  return timestamps.map((ts, i) =>
+    bar(
+      new Date(ts * 1000),
+      q?.open?.[i],
+      q?.high?.[i],
+      q?.low?.[i],
+      q?.close?.[i],
+      adj?.[i],
+      q?.volume?.[i],
+    ),
+  );
+}
+
+// --- history ------------------------------------------------------------------
+
+const historyCache = new Map<string, CacheEntry<Bar[]>>();
+// Daily bars only change once a day, but the *last* one moves while the market
+// is open, so this is short enough that an intraday reload sees a fresh close
+// and long enough that a dashboard's own re-renders cost nothing.
+const HISTORY_TTL_MS = 10 * 60_000;
+
+/** Yahoo throttles hard on parallel chart calls, so the fan-out is bounded. */
+const HISTORY_CONCURRENCY = 5;
+
+/**
+ * Daily OHLCV for a set of symbols over a date range.
+ *
+ * One chart call per symbol — Yahoo has no batch history endpoint — bounded to
+ * `HISTORY_CONCURRENCY` at a time. A symbol that answers with nothing is
+ * retried once on the other Indian exchange, exactly as `getQuotes` does, so a
+ * basket holding a BSE-only name doesn't lose its line on the chart.
+ */
+export async function getHistory(
+  yahooSymbols: string[],
+  from: Date,
+  to: Date,
+): Promise<{ history: SymbolHistory[]; missing: string[] }> {
+  const unique = [...new Set(yahooSymbols)].filter(Boolean);
+  const history: SymbolHistory[] = [];
+  const missing: string[] = [];
+
+  const queue = [...unique];
+  const workers = Array.from({ length: Math.min(HISTORY_CONCURRENCY, queue.length) }, async () => {
+    for (let requested = queue.shift(); requested; requested = queue.shift()) {
+      const resolved = await barsWithRetry(requested, from, to);
+      if (resolved) history.push({ requested, symbol: resolved.symbol, bars: resolved.bars });
+      else missing.push(requested);
+    }
+  });
+  await Promise.all(workers);
+
+  // The fan-out finishes out of order; the caller renders a legend from this.
+  history.sort((a, b) => unique.indexOf(a.requested) - unique.indexOf(b.requested));
+  return { history, missing };
+}
+
+async function barsWithRetry(
+  requested: string,
+  from: Date,
+  to: Date,
+): Promise<{ symbol: string; bars: Bar[] } | null> {
+  const first = await cachedBars(requested, from, to);
+  if (first.length) return { symbol: requested, bars: first };
+
+  const other = otherExchangeSymbol(requested);
+  if (!other) return null;
+  const second = await cachedBars(other, from, to);
+  return second.length ? { symbol: other, bars: second } : null;
+}
+
+async function cachedBars(yahooSymbol: string, from: Date, to: Date): Promise<Bar[]> {
+  // The range is part of the key: a cached 1-year fetch cannot serve a 5-year
+  // one, and slicing a longer cached range to a shorter one is a saving not
+  // worth the bug it invites.
+  const key = `${yahooSymbol}|${day(from)}|${day(to)}`;
+  const hit = cacheGet(historyCache, key);
+  if (hit) return hit;
+
+  let bars: Bar[] = [];
+  try {
+    bars = (await fetchChart(yahooSymbol, from, to)).map(stripDate);
+  } catch {
+    // A single symbol failing is a gap in the dashboard, not a failed request.
+    return [];
+  }
+
+  if (bars.length) cacheSet(historyCache, key, bars, HISTORY_TTL_MS);
+  return bars;
+}
+
+function stripDate({ date: _date, close: _close, ...rest }: ChartBar): Bar {
+  return rest;
+}
+
+function day(date: Date): string {
+  return date.toISOString().slice(0, 10);
 }
 
 // --- baseline price -----------------------------------------------------------
@@ -332,7 +477,7 @@ export async function searchSymbols(query: string): Promise<SymbolMatch[]> {
 
   let matches: SymbolMatch[] = [];
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // deno-lint-ignore no-explicit-any
     const result: any = await yf.search(
       q,
       { quotesCount: 20, newsCount: 0, enableNavLinks: false, enableFuzzyQuery: false },
@@ -342,14 +487,14 @@ export async function searchSymbols(query: string): Promise<SymbolMatch[]> {
       .filter(
         // The exchange code is the primary filter, but Yahoo sometimes omits or
         // renames it while still returning a well-formed `.NS`/`.BO` symbol.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // deno-lint-ignore no-explicit-any
         (r: any) =>
           r.isYahooFinance &&
           r.quoteType === "EQUITY" &&
           typeof r.symbol === "string" &&
           (SEARCH_EXCHANGES.has(r.exchange) || INDIAN_SUFFIX.test(r.symbol)),
       )
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      // deno-lint-ignore no-explicit-any
       .map((r: any) => {
         const { symbol, exchange } = fromYahooSymbol(r.symbol);
         return {
@@ -382,7 +527,7 @@ async function resolveAsTicker(query: string): Promise<SymbolMatch[]> {
   ];
   const raw = await fetchQuoteBatch(candidates);
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  // deno-lint-ignore no-explicit-any
   return (raw as any[]).map((r) => {
     const parsed = fromYahooSymbol(r.symbol);
     return {

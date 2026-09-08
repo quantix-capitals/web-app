@@ -23,11 +23,19 @@ import {
 import {
   getBaselinePrice,
   getCloseOn,
+  getHistory,
   getQuotes,
   searchSymbols,
 } from "../_shared/yahoo.ts";
 
 const MAX_SYMBOLS = 100;
+
+/**
+ * History is one upstream call per symbol, unlike quotes — so it gets a tighter
+ * cap than `MAX_SYMBOLS`. A basket past this is past what a dashboard can plot
+ * legibly anyway.
+ */
+const MAX_HISTORY_SYMBOLS = 40;
 
 Deno.serve(async (request) => {
   const cors = corsHeadersFor(request);
@@ -48,9 +56,11 @@ Deno.serve(async (request) => {
         return json(await close(url), 200, cors);
       case "baseline":
         return json(await baseline(url), 200, cors);
+      case "history":
+        return json(await history(url), 200, cors);
       default:
         throw new HttpError(
-          "Unknown ?op= — expected quotes, search, close or baseline.",
+          "Unknown ?op= — expected quotes, search, close, baseline or history.",
           400,
         );
     }
@@ -131,4 +141,48 @@ async function baseline(url: URL) {
   } catch (err) {
     throw upstreamError(err, "Could not reach Yahoo Finance.");
   }
+}
+
+/**
+ * `?op=history&symbols=RELIANCE.NS,^NSEI&from=YYYY-MM-DD&to=YYYY-MM-DD` — daily
+ * OHLCV, for the basket dashboard.
+ *
+ * The benchmark rides in the same `symbols` list rather than getting a
+ * parameter of its own: it is one more chart call, it wants the same range, and
+ * keeping it here means the caller can swap `^NSEI` for another index without a
+ * change on this side.
+ *
+ * A symbol that returns nothing lands in `missing` with a 200, for the same
+ * reason `baseline` does — one dead ticker should cost the dashboard a line,
+ * not the whole page.
+ */
+async function history(url: URL) {
+  const symbols = (url.searchParams.get("symbols") ?? "")
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean);
+
+  if (!symbols.length) throw new HttpError("Missing symbols.", 400);
+  if (symbols.length > MAX_HISTORY_SYMBOLS) {
+    throw new HttpError(`Too many symbols (max ${MAX_HISTORY_SYMBOLS}).`, 400);
+  }
+
+  const from = parseDay(url.searchParams.get("from"), "from");
+  const to = url.searchParams.get("to") ? parseDay(url.searchParams.get("to"), "to") : new Date();
+  if (from >= to) throw new HttpError("?from= must be before ?to=.", 400);
+
+  try {
+    const { history, missing } = await getHistory(symbols, from, to);
+    return { history, missing, asOf: new Date().toISOString() };
+  } catch (err) {
+    throw upstreamError(err, "Could not reach Yahoo Finance.");
+  }
+}
+
+function parseDay(value: string | null, name: string): Date {
+  const parsed = value ? new Date(value) : new Date(NaN);
+  if (Number.isNaN(parsed.getTime())) {
+    throw new HttpError(`Missing or invalid ?${name}= date.`, 400);
+  }
+  return parsed;
 }

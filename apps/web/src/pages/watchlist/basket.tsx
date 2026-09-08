@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { lazy, Suspense, useMemo } from "react";
+import { useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconWatchlist } from "@/components/shell/nav-icons";
 import {
@@ -11,6 +11,7 @@ import {
   Stat,
   StatBand,
   SymbolLink,
+  Tabs,
 } from "@/components/ui/primitives";
 import { HeadRow, RowAction, Sub, Table, Td, Th, Tr } from "@/components/ui/table";
 import {
@@ -29,6 +30,22 @@ import { BasketSettings } from "./basket-settings";
 import { basketDetail, removeItem, setEntry } from "@/services/watchlist-service";
 import { basketKey } from "./keys";
 import { NotFound } from "@/pages/not-found";
+
+/**
+ * The dashboard is a separate chunk. It pulls in Highcharts and the whole
+ * analytics layer, and a reader who only ever opens the ledger should never
+ * download either — which is the same reason the routes in `App.tsx` are lazy.
+ */
+const Dashboard = lazy(() =>
+  import("./dashboard/dashboard").then((m) => ({ default: m.Dashboard })),
+);
+
+/**
+ * Which half of the page is showing. It lives in the URL rather than in state
+ * so a dashboard can be linked to, survives a reload, and gets its own entry in
+ * the back button — a view this heavy should be addressable.
+ */
+type View = "ledger" | "dashboard";
 
 /**
  * One basket. The id comes from the route; the row comes back scoped by RLS, so
@@ -61,7 +78,9 @@ export function Basket() {
 function BasketLoading() {
   return (
     <div className="bg-canvas" role="status" aria-label="Loading basket">
-      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line px-6 py-5">
+      {/* Sticky here too, so the header does not shift when the real one
+          replaces it. */}
+      <header className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <BackLink href="/watchlist" label="Back to watchlist" />
@@ -120,6 +139,16 @@ function BasketLoading() {
 }
 
 function BasketView({ list }: { list: WatchlistSummary }) {
+  const [params, setParams] = useSearchParams();
+  const view: View = params.get("view") === "dashboard" ? "dashboard" : "ledger";
+
+  const setView = (next: View) => {
+    const updated = new URLSearchParams(params);
+    if (next === "ledger") updated.delete("view");
+    else updated.set("view", next);
+    setParams(updated);
+  };
+
   const yahooSymbols = useMemo(
     () =>
       list.items
@@ -140,8 +169,15 @@ function BasketView({ list }: { list: WatchlistSummary }) {
   return (
     <div className="bg-canvas">
       {/* The back control shares the header's first line rather than owning a
-          row of its own above it — one line of chrome, not two. */}
-      <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line px-6 py-5">
+          row of its own above it — one line of chrome, not two.
+
+          Sticky rather than fixed: `main` is the app's only scroller, so
+          `top-0` pins against its scrollport and the header keeps the sidebar's
+          width and the page's gutter automatically. A fixed header would have
+          to be told how wide it is, and told again every time the rail
+          collapses. It carries its own `bg-canvas` because a sticky element
+          with a transparent ground has the page scrolling visibly through it. */}
+      <header className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
         <div className="min-w-0">
           <div className="flex items-center gap-2.5">
             <BackLink href="/watchlist" label="Back to watchlist" />
@@ -160,19 +196,89 @@ function BasketView({ list }: { list: WatchlistSummary }) {
         </div>
         {list.isOwner ? (
           <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => refresh()}
-              disabled={status === "loading"}
-              className={cn(ActionStyle({ variant: "ghost" }), status === "loading" && "opacity-60")}
-            >
-              {status === "loading" ? "Refreshing…" : "Refresh"}
-            </button>
+            {/* Only on the ledger: the dashboard reloads daily bars, not live
+                quotes, and it carries its own control for that. Two buttons
+                labelled "Refresh" that refresh different things is worse than
+                one button that only appears where it means something. */}
+            {view === "ledger" ? (
+              <button
+                type="button"
+                onClick={() => refresh()}
+                disabled={status === "loading"}
+                className={cn(
+                  ActionStyle({ variant: "ghost" }),
+                  status === "loading" && "opacity-60",
+                )}
+              >
+                {status === "loading" ? "Refreshing…" : "Refresh"}
+              </button>
+            ) : null}
             <BasketSettings list={list} />
           </div>
         ) : null}
       </header>
 
+      {/* The view switch. A tab strip rather than a button: these are two peer
+          readings of one basket, not an action performed on it — and the strip
+          sits on the rule it underlines, which is where this product puts a
+          choice between views. */}
+      <Section>
+        <Tabs
+          active={view}
+          onChange={setView}
+          tabs={[
+            { id: "ledger", label: "Ledger", count: list.items.length },
+            { id: "dashboard", label: "Dashboard" },
+          ]}
+        />
+      </Section>
+
+      {view === "dashboard" ? (
+        <Suspense fallback={<DashboardFallback />}>
+          <Dashboard list={list} />
+        </Suspense>
+      ) : (
+        <Ledger
+          list={list}
+          quotes={quotes}
+          totals={totals}
+          status={status}
+          error={error}
+          missing={missing}
+          refresh={refresh}
+          struck={struck}
+          priced={priced}
+        />
+      )}
+    </div>
+  );
+}
+
+/** The ledger view — the page as it was before the dashboard joined it. */
+function Ledger({
+  list,
+  quotes,
+  totals,
+  status,
+  error,
+  missing,
+  refresh,
+  struck,
+  priced,
+}: {
+  list: WatchlistSummary;
+  quotes: ReturnType<typeof useQuotes>["quotes"];
+  totals: ReturnType<typeof listPnl>;
+  status: ReturnType<typeof useQuotes>["status"];
+  error: string | null;
+  missing: string[];
+  refresh: () => void;
+  struck: string;
+  /** Renders a figure, a skeleton or a dash — the three states a price has. */
+  priced: (value: number | null, signed?: boolean) => React.ReactNode;
+}) {
+  return (
+    <>
       <Section className="bg-sunken">
         <StatBand>
           <Stat
@@ -242,6 +348,36 @@ function BasketView({ list }: { list: WatchlistSummary }) {
               : "This basket has no symbols."}
           </EmptyState>
         )}
+      </Section>
+    </>
+  );
+}
+
+/**
+ * What fills the page while the dashboard chunk downloads.
+ *
+ * It traces the same regions the dashboard opens with — the filter row, the
+ * hero, the stat band — so the switch lands into a shape that is already the
+ * right size rather than a blank page that jumps.
+ */
+function DashboardFallback() {
+  return (
+    <div role="status" aria-label="Loading dashboard">
+      <div className="flex items-center justify-between border-b border-line bg-sunken px-6 py-3">
+        <Skeleton className="h-6 w-64" />
+        <Skeleton className="h-3 w-40" />
+      </div>
+      <div className="px-6 py-6">
+        <Skeleton className="h-3 w-32" />
+        <Skeleton className="mt-3 h-10 w-48" />
+      </div>
+      <Section className="bg-sunken">
+        <StatBand>
+          <Stat label="Value now" value={<SkeletonFigure />} />
+          <Stat label="Gain" value={<SkeletonFigure />} />
+          <Stat label="Annualised" value={<SkeletonFigure />} />
+          <Stat label="Worst fall" value={<SkeletonFigure />} />
+        </StatBand>
       </Section>
     </div>
   );

@@ -80,7 +80,14 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           </button>
           <Wordmark />
         </div>
-        <main className="min-h-0 flex-1 overflow-y-auto">{children}</main>
+        {/* `relative` makes this the containing block for the pages inside it.
+            Without it, any absolutely-positioned descendant — a `sr-only` label,
+            a popover, a chart library's own overlay — resolves against the
+            viewport instead, which lets it escape the `overflow-hidden` above
+            and grow the document to the height of the page. The result is a
+            second scrollbar beside this one, on exactly the pages long enough
+            to notice. This is the only scroller the app has; keep it that way. */}
+        <main className="relative min-h-0 flex-1 overflow-y-auto">{children}</main>
       </div>
     </div>
   );

@@ -7,7 +7,7 @@
  * ticker cost one request. This module is the one-shot calls around it.
  */
 
-import type { BaselinePrice, Quote, SymbolMatch } from "@stealth/shared";
+import type { BaselinePrice, HistoryResult, Quote, SymbolMatch } from "@stealth/shared";
 import { get } from "./functions";
 
 export interface QuotesResult {
@@ -37,6 +37,27 @@ export async function fetchCloseOn(yahooSymbol: string, isoDate: string): Promis
     on: isoDate,
   });
   return close;
+}
+
+/**
+ * Daily OHLCV for a set of symbols. The benchmark is just another symbol in the
+ * list — see `?op=history` in `supabase/functions/market/index.ts`.
+ *
+ * Dates are sent as plain `YYYY-MM-DD`: the range is a *trading day* range, and
+ * putting a local timestamp on the wire would move it by a day for anyone west
+ * of UTC.
+ */
+export function fetchHistory(
+  yahooSymbols: string[],
+  from: string,
+  to: string,
+  signal?: AbortSignal,
+): Promise<HistoryResult> {
+  return get<HistoryResult>(
+    "market",
+    { op: "history", symbols: yahooSymbols.join(","), from, to },
+    signal,
+  );
 }
 
 /** The entry baseline for a symbol added today: a live quote, else today's close. */
