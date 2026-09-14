@@ -46,3 +46,43 @@ buffer responses.
 
 Set the env from `.env.example`, then point the web app's `NEXT_PUBLIC_AGENT_URL`
 at the resulting origin.
+
+## The basket analyst currently runs in the browser
+
+The sidebar on a basket's page (`apps/web/src/lib/analyst/`) is a working agent
+built on the **OpenAI Agents SDK**, and for now it runs in the page rather than
+here. Its remit is **one basket**: it reviews each holding in it, calls
+keep/add/trim/sell, names a replacement or an addition from a bench of liquid NSE
+large caps, and judges all of it against the basket's **brief**.
+
+- **Briefs** (`watchlist_briefs`, migration `0004`): one per basket — why it exists,
+  how it was built, its horizon, what working and failing look like, and per holding
+  a role, a thesis, pluses, minuses, a target and a stop. Stored as structured jsonb
+  plus the markdown rendered from it. Written by a person, drafted by the agent, or
+  passed by code: `createBasket({ origin: "algorithm", brief })`. Every run is given
+  it by default.
+- **Runs** (`watchlist_analyst_runs`): every run is kept — the structured report the
+  page renders tables and charts from, the same report as markdown, the brief as
+  read, which earlier runs it was given as context (chosen per run), the follow-up
+  questions, and the model conversation they continue from.
+
+It is laid out so moving it here is a change of transport and nothing else:
+
+| Browser today | Belongs here |
+| --- | --- |
+| `lib/analyst/quant.ts` — the arithmetic, from bars and live quotes | unchanged, server-side |
+| `lib/analyst/tools.ts` — five read-only tools over one measured snapshot | unchanged |
+| `lib/analyst/agent.ts` — prompt, zod output schema, two `run()` calls | `agent/watchlist.js` |
+| `lib/analyst/client.ts` + `runtime.ts` — the credentials and the OpenAI client | `OPENAI_API_KEY` stops being forwarded into the bundle |
+| `lib/analyst/report.ts` + `services/analyst-runs-service.ts` — runs in Supabase | unchanged; the server writes the same row with the service role |
+
+**Why it has to move.** `OPENAI_API_KEY` and `AGENT_MODEL` are read from
+`apps/web/.env.local` and forwarded into the browser bundle by a `define` block in
+`vite.config.ts`, so the key is in the shipped JavaScript. That is acceptable for
+one desk running its own build and unacceptable for a deploy. Nothing above
+`runtime.ts` knows where it is running, so the move is: add a route here, delete
+that `define` block, and replace the two `run()` calls with a `fetch` carrying the
+user's Supabase token.
+
+Runs and briefs already live in Supabase, so the memory follows the user across
+devices; only the model call still happens in the browser.

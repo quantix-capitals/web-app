@@ -14,6 +14,8 @@
 import { fromYahooSymbol, toYahooSymbol } from "@stealth/shared";
 import type { ListOrigin, ListVisibility } from "@/lib/types";
 import type { WatchlistItemView, WatchlistSummary } from "@/lib/watchlist/types";
+import type { Brief } from "@/lib/watchlist/brief";
+import { saveBrief } from "./brief-service";
 import { fetchBaseline, fetchCloseOn } from "./market-service";
 import { supabase } from "./supabase";
 
@@ -125,16 +127,23 @@ export async function createBasket(input: {
   description?: string;
   visibility?: ListVisibility;
   origin?: ListOrigin;
+  /**
+   * Why the basket exists and what each holding is for. Whoever strikes a basket
+   * — a person, the agent, an algorithm — should say so here, because it is what
+   * the analyst judges the basket against. Written with the same author as the
+   * basket.
+   */
+  brief?: Brief;
 }): Promise<string> {
   const userId = await currentUserId();
   if (!userId) throw new BasketError("Sign in to do that.");
 
   const name = required(input.name, "Give the basket a name.").slice(0, 80);
 
-  // A basket the agent struck is a published call: it is public so it can be
-  // read back and scored by anyone, not just the account it ran under.
+  // A basket the agent or an algorithm struck is a published call: it is public
+  // so it can be read back and scored by anyone, not just the account it ran under.
   const origin = input.origin ?? "user";
-  const visibility = origin === "agent" ? "public" : (input.visibility ?? "private");
+  const visibility = origin === "user" ? (input.visibility ?? "private") : "public";
 
   const { data, error } = await supabase
     .from("watchlists")
@@ -145,11 +154,23 @@ export async function createBasket(input: {
       created_by: origin,
       visibility,
     })
-    .select("id")
+    .select("id, created_at")
     .single();
 
   if (error || !data) throw new BasketError(error?.message ?? "Could not create the basket.");
-  return data.id as string;
+  const id = data.id as string;
+
+  if (input.brief) {
+    try {
+      await saveBrief({ id, name, createdAt: data.created_at as string }, input.brief, origin);
+    } catch (err) {
+      // The basket exists either way; a brief that failed to save can be written
+      // again from the basket's Brief tab, and throwing here would strand the
+      // caller on a form for a basket that was in fact created.
+      console.warn("Basket created without its brief:", err);
+    }
+  }
+  return id;
 }
 
 export async function updateBasket(

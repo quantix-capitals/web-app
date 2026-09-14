@@ -432,8 +432,12 @@ function ListRow({
       </Td>
       {showOwner ? (
         <Td tight>
-          <Badge tone={list.createdBy === "agent" ? "info" : "neutral"}>
-            {list.createdBy === "agent" ? "Agent" : "Member"}
+          <Badge tone={list.createdBy === "user" ? "neutral" : "info"}>
+            {list.createdBy === "agent"
+              ? "Agent"
+              : list.createdBy === "algorithm"
+                ? "Algorithm"
+                : "Member"}
           </Badge>
         </Td>
       ) : null}

@@ -1,4 +1,4 @@
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useCallback, useMemo } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconWatchlist } from "@/components/shell/nav-icons";
@@ -30,6 +30,7 @@ import { BasketSettings } from "./basket-settings";
 import { basketDetail, removeItem, setEntry } from "@/services/watchlist-service";
 import { basketKey } from "./keys";
 import { NotFound } from "@/pages/not-found";
+import { useAnalyst } from "@/lib/analyst/use-analyst";
 
 /**
  * The dashboard is a separate chunk. It pulls in Highcharts and the whole
@@ -41,11 +42,25 @@ const Dashboard = lazy(() =>
 );
 
 /**
+ * The analyst's stored runs and the basket's brief, split out for the same
+ * reason: the run report draws Highcharts, and neither tab is the page most
+ * readers came for.
+ */
+const AnalystView = lazy(() =>
+  import("./analyst/analyst-view").then((m) => ({ default: m.AnalystView })),
+);
+const BriefView = lazy(() =>
+  import("./brief/brief-view").then((m) => ({ default: m.BriefView })),
+);
+
+/**
  * Which half of the page is showing. It lives in the URL rather than in state
  * so a dashboard can be linked to, survives a reload, and gets its own entry in
  * the back button — a view this heavy should be addressable.
  */
-type View = "ledger" | "dashboard";
+type View = "ledger" | "dashboard" | "brief" | "analyst";
+
+const VIEWS: readonly View[] = ["ledger", "dashboard", "brief", "analyst"];
 
 /**
  * One basket. The id comes from the route; the row comes back scoped by RLS, so
@@ -140,7 +155,7 @@ function BasketLoading() {
 
 function BasketView({ list }: { list: WatchlistSummary }) {
   const [params, setParams] = useSearchParams();
-  const view: View = params.get("view") === "dashboard" ? "dashboard" : "ledger";
+  const view: View = VIEWS.find((v) => v === params.get("view")) ?? "ledger";
 
   const setView = (next: View) => {
     const updated = new URLSearchParams(params);
@@ -158,6 +173,38 @@ function BasketView({ list }: { list: WatchlistSummary }) {
   );
   const { quotes, refresh, status, error, missing } = useQuotes(yahooSymbols);
   const totals = useMemo(() => listPnl(list.items, quotes), [list.items, quotes]);
+
+  // The analyst's remit is this basket and nothing else: its runs, its brief and
+  // its prices are all scoped to `list.id`. The hook lives here rather than in
+  // the tab so a run keeps going when the reader flips back to the ledger; the
+  // extra prices it needs load only once the Analyst tab is opened.
+  //
+  // Which run is open lives in the URL (`?run=`), like the view, so a run can be
+  // linked to and the back button walks between runs.
+  const runParam = params.get("run");
+  const selectRun = useCallback(
+    (id: string) =>
+      setParams((prev) => {
+        const next = new URLSearchParams(prev);
+        next.set("view", "analyst");
+        next.set("run", id);
+        return next;
+      }),
+    [setParams],
+  );
+  const onRunSaved = useCallback(
+    (id: string) =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams(prev);
+          next.set("run", id);
+          return next;
+        },
+        { replace: true },
+      ),
+    [setParams],
+  );
+  const analyst = useAnalyst(list, { active: view === "analyst", runParam, onRunSaved });
   const struck = formatDate(list.createdAt);
   // Nothing priced yet says nothing about *why* — still fetching, the feed
   // came back empty, or it errored are three different facts that all sat
@@ -168,88 +215,115 @@ function BasketView({ list }: { list: WatchlistSummary }) {
 
   return (
     <div className="bg-canvas">
-      {/* The back control shares the header's first line rather than owning a
-          row of its own above it — one line of chrome, not two.
+      <div className="min-w-0">
+        {/* The back control shares the header's first line rather than owning a
+            row of its own above it — one line of chrome, not two.
 
-          Sticky rather than fixed: `main` is the app's only scroller, so
-          `top-0` pins against its scrollport and the header keeps the sidebar's
-          width and the page's gutter automatically. A fixed header would have
-          to be told how wide it is, and told again every time the rail
-          collapses. It carries its own `bg-canvas` because a sticky element
-          with a transparent ground has the page scrolling visibly through it. */}
-      <header className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2.5">
-            <BackLink href="/watchlist" label="Back to watchlist" />
-            <h1 className="truncate font-serif text-title tracking-tight text-ink">{list.name}</h1>
-            <Badge tone={list.visibility === "public" ? "accent" : "neutral"}>
-              {list.visibility === "public" ? "Public" : "Private"}
-            </Badge>
-            {list.createdBy === "agent" ? <Badge tone="info">Agent</Badge> : null}
+            Sticky rather than fixed: `main` is the app's only scroller, so
+            `top-0` pins against its scrollport and the header keeps the sidebar's
+            width and the page's gutter automatically. A fixed header would have
+            to be told how wide it is, and told again every time the rail
+            collapses. It carries its own `bg-canvas` because a sticky element
+            with a transparent ground has the page scrolling visibly through it. */}
+        <header className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2.5">
+              <BackLink href="/watchlist" label="Back to watchlist" />
+              <h1 className="truncate font-serif text-title tracking-tight text-ink">{list.name}</h1>
+              <Badge tone={list.visibility === "public" ? "accent" : "neutral"}>
+                {list.visibility === "public" ? "Public" : "Private"}
+              </Badge>
+              {list.createdBy === "agent" ? <Badge tone="info">Agent</Badge> : null}
+              {list.createdBy === "algorithm" ? <Badge tone="info">Algorithm</Badge> : null}
+            </div>
+            {/* Indented to the title, not to the chevron, so the two lines of the
+                header share one left edge. */}
+            <p className="mt-1.5 pl-8 text-meta text-ink-muted">
+              Struck {struck} · modified {formatRelative(list.updatedAt)}
+              {list.description ? ` · ${list.description}` : ""}
+            </p>
           </div>
-          {/* Indented to the title, not to the chevron, so the two lines of the
-              header share one left edge. */}
-          <p className="mt-1.5 pl-8 text-meta text-ink-muted">
-            Struck {struck} · modified {formatRelative(list.updatedAt)}
-            {list.description ? ` · ${list.description}` : ""}
-          </p>
-        </div>
-        {list.isOwner ? (
           <div className="flex items-center gap-2">
-            {/* Only on the ledger: the dashboard reloads daily bars, not live
-                quotes, and it carries its own control for that. Two buttons
-                labelled "Refresh" that refresh different things is worse than
-                one button that only appears where it means something. */}
-            {view === "ledger" ? (
-              <button
-                type="button"
-                onClick={() => refresh()}
-                disabled={status === "loading"}
-                className={cn(
-                  ActionStyle({ variant: "ghost" }),
-                  status === "loading" && "opacity-60",
-                )}
-              >
-                {status === "loading" ? "Refreshing…" : "Refresh"}
-              </button>
+            {list.isOwner ? (
+              <>
+                {/* Only on the ledger: the dashboard reloads daily bars, not live
+                    quotes, and it carries its own control for that. Two buttons
+                    labelled "Refresh" that refresh different things is worse than
+                    one button that only appears where it means something. */}
+                {view === "ledger" ? (
+                  <button
+                    type="button"
+                    onClick={() => refresh()}
+                    disabled={status === "loading"}
+                    className={cn(
+                      ActionStyle({ variant: "ghost" }),
+                      status === "loading" && "opacity-60",
+                    )}
+                  >
+                    {status === "loading" ? "Refreshing…" : "Refresh"}
+                  </button>
+                ) : null}
+                <BasketSettings list={list} />
+              </>
             ) : null}
-            <BasketSettings list={list} />
           </div>
-        ) : null}
-      </header>
+        </header>
 
-      {/* The view switch. A tab strip rather than a button: these are two peer
-          readings of one basket, not an action performed on it — and the strip
-          sits on the rule it underlines, which is where this product puts a
-          choice between views. */}
-      <Section>
-        <Tabs
-          active={view}
-          onChange={setView}
-          tabs={[
-            { id: "ledger", label: "Ledger", count: list.items.length },
-            { id: "dashboard", label: "Dashboard" },
-          ]}
-        />
-      </Section>
+        {/* The view switch. A tab strip rather than a button: these are two peer
+            readings of one basket, not an action performed on it — and the strip
+            sits on the rule it underlines, which is where this product puts a
+            choice between views. */}
+        <Section>
+          <Tabs
+            active={view}
+            onChange={setView}
+            tabs={[
+              { id: "ledger", label: "Ledger", count: list.items.length },
+              { id: "dashboard", label: "Dashboard" },
+              { id: "brief", label: "Brief" },
+              // The analyst is open to anyone who can see the basket: asking "is
+              // this basket any good?" of a public basket is a fair question, and
+              // the runs a reader makes are their own.
+              {
+                id: "analyst",
+                label: "Analyst",
+                count: analyst.runsStatus === "ready" ? analyst.runs.length : undefined,
+              },
+            ]}
+          />
+        </Section>
 
-      {view === "dashboard" ? (
-        <Suspense fallback={<DashboardFallback />}>
-          <Dashboard list={list} />
-        </Suspense>
-      ) : (
-        <Ledger
-          list={list}
-          quotes={quotes}
-          totals={totals}
-          status={status}
-          error={error}
-          missing={missing}
-          refresh={refresh}
-          struck={struck}
-          priced={priced}
-        />
-      )}
+        {view === "dashboard" ? (
+          <Suspense fallback={<DashboardFallback />}>
+            <Dashboard list={list} />
+          </Suspense>
+        ) : view === "brief" ? (
+          <Suspense fallback={<DashboardFallback />}>
+            <BriefView list={list} />
+          </Suspense>
+        ) : view === "analyst" ? (
+          <Suspense fallback={<DashboardFallback />}>
+            <AnalystView
+              list={list}
+              analyst={analyst}
+              onSelect={selectRun}
+              onOpenBrief={() => setView("brief")}
+            />
+          </Suspense>
+        ) : (
+          <Ledger
+            list={list}
+            quotes={quotes}
+            totals={totals}
+            status={status}
+            error={error}
+            missing={missing}
+            refresh={refresh}
+            struck={struck}
+            priced={priced}
+          />
+        )}
+      </div>
     </div>
   );
 }

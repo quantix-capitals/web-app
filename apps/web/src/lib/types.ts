@@ -58,7 +58,8 @@ export interface Trade {
   note: string | null;
 }
 
-export type ListOrigin = "user" | "agent";
+/** Who struck a basket, or wrote its brief: a person, the analyst agent, or code. */
+export type ListOrigin = "user" | "agent" | "algorithm";
 export type ListVisibility = "private" | "public";
 export type EntrySource = "live" | "backfill" | "manual";
 
