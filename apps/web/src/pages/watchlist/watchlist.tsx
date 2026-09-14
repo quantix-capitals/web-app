@@ -437,7 +437,7 @@ function ListRow({
               ? "Agent"
               : list.createdBy === "algorithm"
                 ? "Algorithm"
-                : "Member"}
+                : (list.authorName ?? "Member")}
           </Badge>
         </Td>
       ) : null}

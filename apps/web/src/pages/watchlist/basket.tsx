@@ -190,6 +190,7 @@ function BasketView({ list }: { list: WatchlistSummary }) {
             {/* Indented to the title, not to the chevron, so the two lines of the
                 header share one left edge. */}
             <p className="mt-1.5 pl-8 text-meta text-ink-muted">
+              {!list.isOwner && list.authorName ? `By ${list.authorName} · ` : ""}
               Struck {struck} · modified {formatRelative(list.updatedAt)}
               {list.description ? ` · ${list.description}` : ""}
             </p>

@@ -60,6 +60,26 @@ function toSummary(row: any, isOwner: boolean): WatchlistSummary {
 }
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
+/**
+ * Display names for the owners of public baskets.
+ *
+ * Profiles are private to their owners, so this goes through
+ * `public_basket_authors` (`supabase/migrations/0006_…`), which returns the name
+ * and nothing else, and only for people who publish. A failure is not fatal: the
+ * list falls back to an unnamed "Member" rather than failing to load.
+ */
+async function authorNames(userIds: string[]): Promise<Map<string, string>> {
+  const ids = [...new Set(userIds)].filter(Boolean);
+  if (!ids.length) return new Map();
+  const { data, error } = await supabase.rpc("public_basket_authors", { p_user_ids: ids });
+  if (error || !Array.isArray(data)) return new Map();
+  const names = new Map<string, string>();
+  for (const row of data as Array<{ id: string; display_name: string | null }>) {
+    if (row.display_name?.trim()) names.set(row.id, row.display_name.trim());
+  }
+  return names;
+}
+
 async function currentUserId(): Promise<string | null> {
   const { data } = await supabase.auth.getUser();
   return data.user?.id ?? null;
@@ -93,7 +113,10 @@ export async function publicBaskets(): Promise<WatchlistSummary[]> {
     .order("created_at", { ascending: false });
 
   if (error || !data) return [];
-  return data.map((row) => toSummary(row, false));
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const rows = data as any[];
+  const names = await authorNames(rows.map((row) => row.user_id));
+  return rows.map((row) => ({ ...toSummary(row, false), authorName: names.get(row.user_id) ?? null }));
 }
 
 export async function basketDetail(id: string): Promise<WatchlistSummary | null> {
@@ -105,7 +128,10 @@ export async function basketDetail(id: string): Promise<WatchlistSummary | null>
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const row = data as any;
-  return toSummary(row, row.user_id === userId);
+  const isOwner = row.user_id === userId;
+  if (isOwner) return toSummary(row, true);
+  const names = await authorNames([row.user_id]);
+  return { ...toSummary(row, false), authorName: names.get(row.user_id) ?? null };
 }
 
 // --- Writes ------------------------------------------------------------------

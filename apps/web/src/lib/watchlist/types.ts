@@ -35,5 +35,10 @@ export interface WatchlistSummary {
   createdAt: string;
   updatedAt: string;
   isOwner: boolean;
+  /**
+   * The display name of whoever struck the basket, for public baskets read by
+   * someone else. Absent on your own baskets and on broker portfolios.
+   */
+  authorName?: string | null;
   items: WatchlistItemView[];
 }
