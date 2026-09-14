@@ -351,6 +351,20 @@ function openingMessage(ctx: AnalystContext): string {
       `It is ${new Date().toDateString()}.`,
   ];
 
+  if (ctx.book.basket.kind === "portfolio") {
+    parts.push(
+      "THIS IS THE USER'S REAL BROKER PORTFOLIO, read live from Zerodha — not a basket struck to " +
+        "test an idea. Where the instructions say 'basket', read 'portfolio'. Every position is real " +
+        "money. The broker does not report purchase dates, so 'held since' is unknown: never infer a " +
+        "holding period. Holdings on exchange MF are equity mutual funds, identified by ISIN and priced " +
+        "on daily NAV; their sector field is the fund's AMFI category. Judge a fund against NIFTY 50 and " +
+        "against what its category should deliver. The replacement bench holds only stocks, so for a " +
+        "fund do not name a stock as a like-for-like replacement — if you would exit a fund, say so and " +
+        "say what kind of fund should replace it, and be explicit that swapping a diversified fund for a " +
+        "single stock changes the risk. Do not suggest adding a name the portfolio already owns.",
+    );
+  }
+
   if (ctx.briefMarkdown) {
     parts.push(
       "THE BRIEF — why this basket exists and what each holding is for. Judge the basket against it.\n\n" +

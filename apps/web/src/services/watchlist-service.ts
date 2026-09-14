@@ -31,6 +31,7 @@ const EMBED =
 function toSummary(row: any, isOwner: boolean): WatchlistSummary {
   return {
     id: row.id,
+    kind: "watchlist",
     name: row.name,
     description: row.description,
     createdBy: row.created_by,
@@ -162,7 +163,11 @@ export async function createBasket(input: {
 
   if (input.brief) {
     try {
-      await saveBrief({ id, name, createdAt: data.created_at as string }, input.brief, origin);
+      await saveBrief(
+        { kind: "watchlist", id, name, createdAt: data.created_at as string },
+        input.brief,
+        origin,
+      );
     } catch (err) {
       // The basket exists either way; a brief that failed to save can be written
       // again from the basket's Brief tab, and throwing here would strand the

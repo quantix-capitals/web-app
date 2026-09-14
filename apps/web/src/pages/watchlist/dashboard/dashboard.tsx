@@ -58,8 +58,20 @@ import { BetaScatter, Drawdown, RollingBeta, RollingVolatility } from "./risk";
 import { Contribution, Diversification, WeightVsRisk } from "./composition";
 import { HoldingSparklines, HoldingsTable } from "./holdings";
 
+/** How far back a broker portfolio's dashboard values today's holdings from. */
+const PORTFOLIO_LOOKBACK_YEARS = 2;
+
 export function Dashboard({ list }: { list: WatchlistSummary }) {
   const [range, setRange] = useState<RangeId>("all");
+  // A broker portfolio knows what is held but not when it was bought, so it is
+  // valued as today's holdings over a fixed look-back rather than since entry.
+  // Fixed at mount so the window does not creep while the page is open.
+  const [windowStart] = useState(() => {
+    if (list.kind !== "portfolio") return undefined;
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - PORTFOLIO_LOOKBACK_YEARS);
+    return start.toISOString().slice(0, 10);
+  });
   // `range` is what was asked for; `effective` is what the loaded history could
   // honour. The strip highlights the second, so the label always describes the
   // chart underneath it.
@@ -73,7 +85,7 @@ export function Dashboard({ list }: { list: WatchlistSummary }) {
     ranges,
     range: effective,
     refetch,
-  } = useBasketAnalytics(list.id, list.items, range);
+  } = useBasketAnalytics(list.id, list.items, range, { windowStart });
 
   if (!list.items.length) {
     return (
@@ -126,11 +138,19 @@ export function Dashboard({ list }: { list: WatchlistSummary }) {
         ranges={ranges}
         onRange={setRange}
         asOf={asOf}
-        struck={list.createdAt}
+        struck={windowStart ?? list.createdAt}
         onRefresh={refetch}
         analytics={analytics}
       />
 
+      {windowStart ? (
+        <p className="border-b border-line bg-info-soft px-6 py-2.5 text-meta leading-relaxed text-info">
+          Zerodha does not report when each position was bought, so this reads today&apos;s holdings —
+          at today&apos;s quantities — as if they had been held since {formatDate(windowStart)}. It
+          shows how this mix behaves against {BENCHMARK_LABEL}, not your realised return; that is on
+          the Equity and Mutual funds tabs.
+        </p>
+      ) : null}
       <Headline a={analytics} range={effective} />
       <Section className="bg-sunken">
         <RiskMetrics a={analytics} />

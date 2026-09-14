@@ -16,12 +16,13 @@
 
 import type { AgentInputItem } from "@openai/agents-core";
 import { normalizeReport, runLabel } from "@/lib/analyst/report";
+import { subjectColumn, type BookRef } from "@/lib/watchlist/book";
 import type { Exchange, Report, RunRecord, RunSummary, Verdict } from "@/lib/analyst/types";
 import { supabase } from "./supabase";
 
 export class RunError extends Error {}
 
-const SUMMARY = "id, watchlist_id, seq, model, summary, counts, context_run_ids, created_at";
+const SUMMARY = "id, watchlist_id, portfolio_id, seq, model, summary, counts, context_run_ids, created_at";
 const CONTEXT = `${SUMMARY}, report, markdown, brief_markdown, exchanges`;
 const FULL = `${CONTEXT}, conversation`;
 
@@ -29,7 +30,7 @@ const FULL = `${CONTEXT}, conversation`;
 function toSummary(row: any): RunSummary {
   return {
     id: row.id,
-    basketId: row.watchlist_id,
+    basketId: row.watchlist_id ?? row.portfolio_id,
     seq: row.seq,
     label: runLabel(row.seq),
     at: row.created_at,
@@ -53,11 +54,11 @@ function toRecord(row: any): RunRecord {
 /* eslint-enable @typescript-eslint/no-explicit-any */
 
 /** Newest first. */
-export async function listRuns(basketId: string): Promise<RunSummary[]> {
+export async function listRuns(ref: BookRef): Promise<RunSummary[]> {
   const { data, error } = await supabase
     .from("watchlist_analyst_runs")
     .select(SUMMARY)
-    .eq("watchlist_id", basketId)
+    .eq(subjectColumn(ref.kind), ref.id)
     .order("seq", { ascending: false });
 
   if (error) throw new RunError(error.message);
@@ -99,7 +100,7 @@ export async function runsForContext(ids: string[]): Promise<RunRecord[]> {
  * already happened, so it is never thrown away over a label.
  */
 export async function saveRun(input: {
-  basketId: string;
+  book: BookRef;
   model: string | null;
   report: Report;
   markdownFor: (label: string) => string;
@@ -108,12 +109,13 @@ export async function saveRun(input: {
   conversation: AgentInputItem[];
 }): Promise<RunRecord> {
   let lastError: string | null = null;
+  const column = subjectColumn(input.book.kind);
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const { data: top, error: topError } = await supabase
       .from("watchlist_analyst_runs")
       .select("seq")
-      .eq("watchlist_id", input.basketId)
+      .eq(column, input.book.id)
       .order("seq", { ascending: false })
       .limit(1)
       .maybeSingle();
@@ -123,7 +125,7 @@ export async function saveRun(input: {
     const { data, error } = await supabase
       .from("watchlist_analyst_runs")
       .insert({
-        watchlist_id: input.basketId,
+        [column]: input.book.id,
         seq,
         model: input.model,
         summary: input.report.summary,

@@ -33,6 +33,7 @@ import {
   type StoredBrief,
 } from "@/lib/watchlist/brief";
 import type { WatchlistSummary } from "@/lib/watchlist/types";
+import { bookRef } from "@/lib/watchlist/book";
 import { getBrief, saveBrief } from "@/services/brief-service";
 import { Prose } from "../analyst/prose";
 import { BriefEditor, type HeldSymbol } from "./brief-editor";
@@ -41,7 +42,11 @@ type Mode = "read" | "edit" | "draft";
 
 export function BriefView({ list }: { list: WatchlistSummary }) {
   const queryClient = useQueryClient();
-  const query = useQuery({ queryKey: briefKey(list.id), queryFn: () => getBrief(list.id) });
+  const query = useQuery({
+    queryKey: briefKey(bookRef(list)),
+    queryFn: () => getBrief(bookRef(list)),
+    enabled: Boolean(list.id),
+  });
   const [mode, setMode] = useState<Mode>("read");
   const [editing, setEditing] = useState<{ brief: Brief; author: BriefAuthor } | null>(null);
 
@@ -58,7 +63,7 @@ export function BriefView({ list }: { list: WatchlistSummary }) {
     mutationFn: (input: { brief: Brief; author: BriefAuthor }) =>
       saveBrief(list, input.brief, input.author),
     onSuccess: (next) => {
-      queryClient.setQueryData(briefKey(list.id), next);
+      queryClient.setQueryData(briefKey(bookRef(list)), next);
       setMode("read");
       setEditing(null);
     },

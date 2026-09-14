@@ -246,14 +246,27 @@ export function buildSeries(
   history: SymbolHistory[],
   benchmarkBars: Bar[] | null,
   quotes: QuoteMap = {},
+  options: {
+    /**
+     * Value every holding as though its current quantity had been held since
+     * this instant, instead of since its own entry.
+     *
+     * For books that know what is held but not when it was bought — a broker
+     * portfolio. The cost is then the price at the window's start (today's close
+     * carried back along the adjusted series), not the recorded average price,
+     * so the curve shows how this mix of holdings behaved, not a realised return.
+     */
+    windowStart?: number;
+  } = {},
 ): BasketSeries | null {
+  const windowed = options.windowStart !== undefined;
   const byRequested = new Map(history.map((h) => [h.requested, h] as const));
   const excluded: Excluded[] = [];
 
   const usable: Array<{ item: WatchlistItemView; bars: Map<number, Bar> }> = [];
   for (const item of items) {
     if (!item.symbol) continue;
-    if (item.entryPrice === null || item.entryPrice <= 0) {
+    if (!windowed && (item.entryPrice === null || item.entryPrice <= 0)) {
       excluded.push({ symbol: item.symbol, exchange: item.exchange, reason: "no-baseline" });
       continue;
     }
@@ -268,7 +281,9 @@ export function buildSeries(
 
   if (!usable.length) return null;
 
-  const inception = Math.min(...usable.map(({ item }) => entryDayOf(item)));
+  const inception = windowed
+    ? dayOf(options.windowStart!)
+    : Math.min(...usable.map(({ item }) => entryDayOf(item)));
   const benchmark = benchmarkBars?.length ? barsByDay(benchmarkBars) : null;
 
   const days = new Set<number>();
@@ -281,8 +296,7 @@ export function buildSeries(
   const holdings: HoldingSeries[] = [];
   let livePriced = 0;
   for (const { item, bars } of usable) {
-    const entryAt = entryDayOf(item);
-    const cost = item.quantity * item.entryPrice!;
+    const entryAt = windowed ? dayOf(options.windowStart!) : entryDayOf(item);
 
     // The adjusted close on the entry day is the denominator of every later
     // growth factor, so it is looked up with the same forward-fill the path
@@ -292,6 +306,17 @@ export function buildSeries(
       excluded.push({ symbol: item.symbol, exchange: item.exchange, reason: "no-history" });
       continue;
     }
+
+    let entryPrice = item.entryPrice ?? 0;
+    if (windowed) {
+      const latest = latestBar(bars);
+      if (!latest?.ac || !latest.c) {
+        excluded.push({ symbol: item.symbol, exchange: item.exchange, reason: "no-history" });
+        continue;
+      }
+      entryPrice = latest.c * (entryAdj / latest.ac);
+    }
+    const cost = item.quantity * entryPrice;
 
     let entryIndex = dates.findIndex((d) => d >= entryAt);
     if (entryIndex < 0) entryIndex = dates.length - 1;
@@ -316,7 +341,7 @@ export function buildSeries(
       name: item.name,
       quantity: item.quantity,
       cost,
-      entryPrice: item.entryPrice!,
+      entryPrice,
       entryIndex,
       entryAt,
       value,

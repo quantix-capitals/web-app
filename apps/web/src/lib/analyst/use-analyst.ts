@@ -31,6 +31,7 @@ import { toYahooSymbol } from "@stealth/shared";
 import { useQuotes } from "@/lib/market/use-quotes";
 import type { WatchlistSummary } from "@/lib/watchlist/types";
 import { isBriefEmpty, type StoredBrief } from "@/lib/watchlist/brief";
+import type { BookRef } from "@/lib/watchlist/book";
 import { getBrief } from "@/services/brief-service";
 import {
   deleteRun,
@@ -127,10 +128,19 @@ export function useAnalyst(
     runParam: string | null;
     /** Called with a freshly saved run's id, so the page can open it. */
     onRunSaved: (id: string) => void;
+    /**
+     * False while the book has no stored record yet — a portfolio whose row is
+     * still being created. Nothing is fetched until it is true.
+     */
+    enabled?: boolean;
   },
 ): UseAnalyst {
   const queryClient = useQueryClient();
   const needsKey = !isConfigured();
+  // Baskets and portfolios file their briefs and runs in the same tables, told
+  // apart by which id they carry.
+  const ref = useMemo<BookRef>(() => ({ kind: basket.kind, id: basket.id }), [basket.kind, basket.id]);
+  const enabled = (options.enabled ?? true) && Boolean(basket.id);
 
   const [running, setRunning] = useState(false);
   const [runningContext, setRunningContext] = useState<string[]>([]);
@@ -167,7 +177,7 @@ export function useAnalyst(
   }, []);
 
   // A run in flight keeps its prices subscribed even if the tab changes.
-  const pricesWanted = (options.active || running) && heldSymbols.length > 0;
+  const pricesWanted = enabled && (options.active || running) && heldSymbols.length > 0;
 
   /**
    * Two fetches, not one, because they fail differently: without the holdings
@@ -236,13 +246,15 @@ export function useAnalyst(
   // --- stored state ------------------------------------------------------------
 
   const briefQuery = useQuery({
-    queryKey: briefKey(basket.id),
-    queryFn: () => getBrief(basket.id),
+    queryKey: briefKey(ref),
+    queryFn: () => getBrief(ref),
+    enabled,
   });
 
   const runsQuery = useQuery({
-    queryKey: runsKey(basket.id),
-    queryFn: () => listRuns(basket.id),
+    queryKey: runsKey(ref),
+    queryFn: () => listRuns(ref),
+    enabled,
   });
   const runs = useMemo(() => runsQuery.data ?? [], [runsQuery.data]);
 
@@ -252,7 +264,7 @@ export function useAnalyst(
   const runQuery = useQuery({
     queryKey: runKey(selectedRunId ?? ""),
     queryFn: () => getRun(selectedRunId!),
-    enabled: Boolean(selectedRunId),
+    enabled: enabled && Boolean(selectedRunId),
     // A stored run only changes when this tab changes it, and those writes go
     // straight into the cache.
     staleTime: Infinity,
@@ -294,7 +306,7 @@ export function useAnalyst(
       const model = MODEL ?? null;
       const persist = async () => {
         const record = await saveRun({
-          basketId: basket.id,
+          book: ref,
           model,
           report,
           markdownFor: (label) =>
@@ -311,7 +323,7 @@ export function useAnalyst(
           conversation,
         });
         queryClient.setQueryData(runKey(record.id), record);
-        await queryClient.invalidateQueries({ queryKey: runsKey(basket.id) });
+        await queryClient.invalidateQueries({ queryKey: runsKey(ref) });
         // The next run builds on this one by default.
         setChosen(null);
         onSavedRef.current(record.id);
@@ -338,7 +350,7 @@ export function useAnalyst(
     contextIds,
     runs,
     brief,
-    basket.id,
+    ref,
     basket.name,
     queryClient,
   ]);
@@ -408,9 +420,9 @@ export function useAnalyst(
     async (id: string) => {
       await deleteRun(id);
       queryClient.removeQueries({ queryKey: runKey(id) });
-      await queryClient.invalidateQueries({ queryKey: runsKey(basket.id) });
+      await queryClient.invalidateQueries({ queryKey: runsKey(ref) });
     },
-    [basket.id, queryClient],
+    [ref, queryClient],
   );
 
   const runStatus: UseAnalyst["runStatus"] = !selectedRunId
@@ -475,8 +487,8 @@ export function useAnalyst(
  */
 export function describeFailure(cause: unknown): string {
   const message = cause instanceof Error ? cause.message : String(cause);
-  if (/watchlist_(briefs|analyst_runs)/i.test(message) && /does not exist|schema cache|not find/i.test(message)) {
-    return "The brief and run tables are missing. Apply supabase/migrations/0004_watchlist_briefs_and_analyst_runs.sql.";
+  if (/watchlist_(briefs|analyst_runs)|portfolio_id/i.test(message) && /does not exist|schema cache|not find/i.test(message)) {
+    return "The brief and run tables are out of date. Apply the migrations in supabase/migrations (0004 and 0005).";
   }
   if (/401|invalid[_ ]api[_ ]key|Incorrect API key/i.test(message)) {
     return "OpenAI rejected the key. Check OPENAI_API_KEY in apps/web/.env.local.";

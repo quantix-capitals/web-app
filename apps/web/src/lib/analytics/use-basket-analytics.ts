@@ -20,7 +20,7 @@ import { toYahooSymbol } from "@stealth/shared";
 import type { Bar } from "@stealth/shared";
 import type { WatchlistItemView } from "@/lib/watchlist/types";
 import { useQuotes } from "@/lib/market/use-quotes";
-import { fetchHistory } from "@/services/market-service";
+import { fetchHistoryBatched } from "@/lib/analyst/history";
 import {
   BENCHMARK_SYMBOL,
   analyse,
@@ -62,7 +62,15 @@ export function useBasketAnalytics(
   basketId: string,
   items: WatchlistItemView[],
   range: RangeId,
+  options: {
+    /**
+     * ISO date to value today's holdings from, for a book with no purchase dates.
+     * See `windowStart` on `buildSeries`.
+     */
+    windowStart?: string;
+  } = {},
 ): BasketAnalyticsResult {
+  const { windowStart } = options;
   const symbols = useMemo(
     () =>
       [
@@ -76,12 +84,14 @@ export function useBasketAnalytics(
   );
 
   const from = useMemo(() => {
-    const stamps = items.map((i) => new Date(i.entryAt ?? i.addedAt).getTime()).filter(Number.isFinite);
+    const stamps = windowStart
+      ? [new Date(windowStart).getTime()]
+      : items.map((i) => new Date(i.entryAt ?? i.addedAt).getTime()).filter(Number.isFinite);
     if (!stamps.length) return null;
     const start = new Date(Math.min(...stamps));
     start.setDate(start.getDate() - LEAD_DAYS);
     return start.toISOString().slice(0, 10);
-  }, [items]);
+  }, [items, windowStart]);
 
   const to = useMemo(() => {
     // Tomorrow, not today: Yahoo's `period2` is exclusive, and asking for today
@@ -95,7 +105,7 @@ export function useBasketAnalytics(
     // `from` and the symbol set are in the key so adding a symbol or
     // re-baselining an entry refetches rather than reusing stale bars.
     queryKey: [...historyKey(basketId), { symbols, from }],
-    queryFn: ({ signal }) => fetchHistory([...symbols, BENCHMARK_SYMBOL], from!, to, signal),
+    queryFn: ({ signal }) => fetchHistoryBatched([...symbols, BENCHMARK_SYMBOL], from!, to, signal),
     enabled: Boolean(symbols.length && from),
     staleTime: 60 * 60_000,
     gcTime: 2 * 60 * 60_000,
@@ -113,8 +123,10 @@ export function useBasketAnalytics(
     const benchmark: Bar[] | null =
       query.data.history.find((h) => h.requested === BENCHMARK_SYMBOL)?.bars ?? null;
     const holdings = query.data.history.filter((h) => h.requested !== BENCHMARK_SYMBOL);
-    return buildSeries(items, holdings, benchmark, live.quotes);
-  }, [query.data, items, live.quotes]);
+    return buildSeries(items, holdings, benchmark, live.quotes, {
+      windowStart: windowStart ? new Date(windowStart).getTime() : undefined,
+    });
+  }, [query.data, items, live.quotes, windowStart]);
 
   const ranges = useMemo<RangeId[]>(
     () => (series ? availableRanges(series.dates) : ["all"]),

@@ -22,7 +22,7 @@
 import { instrumentKey, toYahooSymbol } from "@stealth/shared";
 import type { QuoteMap, SymbolHistory } from "@stealth/shared";
 import { formatLevelPercent, formatPercent } from "@/lib/format";
-import type { WatchlistItemView, WatchlistSummary } from "@/lib/watchlist/types";
+import type { BookKind, WatchlistItemView, WatchlistSummary } from "@/lib/watchlist/types";
 import { MIN_BARS, closes, computeSignals, trailing } from "./signals";
 import { BENCH, nameOf } from "./universe";
 import { UNCLASSIFIED, sectorOf } from "./sectors";
@@ -136,7 +136,9 @@ export function collapse(items: WatchlistItemView[]): Position[] {
     if (!item.symbol) continue;
     const key = instrumentKey(item);
     const existing = byKey.get(key);
-    const opened = item.entryAt ?? item.addedAt ?? null;
+    // A broker holding has no dates at all (`addedAt` is empty), and "held since"
+    // is then unknown rather than the epoch.
+    const opened = item.entryAt ?? (item.addedAt || null);
 
     if (!existing) {
       byKey.set(key, {
@@ -144,7 +146,7 @@ export function collapse(items: WatchlistItemView[]): Position[] {
         symbol: item.symbol,
         exchange: item.exchange,
         name: item.name ?? nameOf(item.symbol),
-        sector: sectorOf(item.symbol),
+        sector: item.sector ?? sectorOf(item.symbol),
         quantity: item.quantity,
         entryPrice: item.entryPrice,
         entryAt: opened,
@@ -191,6 +193,8 @@ export interface MeasuredCandidate {
 /** Which basket is under review — the agent's whole remit. */
 export interface BasketMeta {
   id: string;
+  /** A basket someone struck, or a broker portfolio. */
+  kind: BookKind;
   name: string;
   description: string | null;
   struck: string;
@@ -296,6 +300,7 @@ export function measure({
   return {
     basket: {
       id: basket.id,
+      kind: basket.kind,
       name: basket.name,
       description: basket.description,
       struck: basket.createdAt,

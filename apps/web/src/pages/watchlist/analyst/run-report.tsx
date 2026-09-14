@@ -11,10 +11,11 @@
  * on what was known then.
  */
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { ActionStyle, Badge, Meter, SymbolLink } from "@/components/ui/primitives";
 import { HeadRow, Sub, Table, Td, Th, Tr } from "@/components/ui/table";
 import { Skeleton } from "@/components/ui/skeleton";
+import { IconChevron } from "@/components/shell/nav-icons";
 import { cn, formatClock, formatDate, formatLevelPercent, formatPercent, moveTone } from "@/lib/format";
 import type { Tone } from "@/lib/types";
 import {
@@ -82,6 +83,20 @@ export function RunReport({
   onSelect: (id: string) => void;
 }) {
   const { report } = run;
+  const { ask } = analyst;
+
+  // Whether the chat dock's thread is unfolded. Open when the run already has a
+  // conversation, and opened by any question — including the "Ask for the full
+  // case" links on a verdict card, which would otherwise answer out of sight.
+  // `RunReport` is keyed by run id, so each run starts from its own state.
+  const [chatOpen, setChatOpen] = useState(run.exchanges.length > 0);
+  const askAndOpen = useCallback(
+    (question: string) => {
+      setChatOpen(true);
+      ask(question);
+    },
+    [ask],
+  );
 
   return (
     <article className="pb-2">
@@ -165,7 +180,7 @@ export function RunReport({
         </h3>
         <div className="max-w-4xl">
           {report.holdings.map((holding) => (
-            <VerdictCard key={holding.key} holding={holding} onAsk={analyst.ask} />
+            <VerdictCard key={holding.key} holding={holding} onAsk={askAndOpen} />
           ))}
         </div>
         {report.skipped.length ? (
@@ -186,7 +201,13 @@ export function RunReport({
         </details>
       ) : null}
 
-      <Conversation run={run} analyst={analyst} />
+      <ChatDock
+        run={run}
+        analyst={analyst}
+        open={chatOpen}
+        onToggle={() => setChatOpen((v) => !v)}
+        onAsk={askAndOpen}
+      />
     </article>
   );
 }
@@ -434,13 +455,44 @@ const SUGGESTIONS = [
   "What is the biggest risk in this basket?",
 ];
 
-function Conversation({ run, analyst }: { run: RunRecord; analyst: UseAnalyst }) {
-  const end = useRef<HTMLDivElement>(null);
-  const { asking, askError, canAsk, ask, needsKey, prices } = analyst;
+/**
+ * The conversation about this run, docked to the bottom of the screen the way a
+ * chat app keeps it.
+ *
+ * The thread sits directly above the box you type in, and both stay in view
+ * while the report scrolls behind them — the verdict you want to challenge is
+ * usually the one on screen, and the answer should land next to where you asked,
+ * not at the end of a long page. The thread scrolls on its own, capped at under
+ * half the viewport so the report is never covered, and folds away entirely
+ * when you want the report back.
+ *
+ * Every question and answer is saved with the run, and later runs built on this
+ * one read them.
+ */
+function ChatDock({
+  run,
+  analyst,
+  open,
+  onToggle,
+  onAsk,
+}: {
+  run: RunRecord;
+  analyst: UseAnalyst;
+  open: boolean;
+  onToggle: () => void;
+  onAsk: (question: string) => void;
+}) {
+  const { asking, askError, canAsk, needsKey, prices } = analyst;
+  const count = run.exchanges.length;
+  const hasThread = count > 0 || Boolean(asking) || Boolean(askError);
+  const showThread = open && hasThread;
+  const thread = useRef<HTMLDivElement>(null);
 
+  // The newest message is always the one in view, as in any chat.
   useEffect(() => {
-    if (asking) end.current?.scrollIntoView({ block: "nearest" });
-  }, [asking, run.exchanges.length]);
+    const el = thread.current;
+    if (el) el.scrollTop = el.scrollHeight;
+  }, [showThread, count, asking, askError]);
 
   const blocked = needsKey
     ? "Questions need an OpenAI key — see the New run pane."
@@ -451,68 +503,110 @@ function Conversation({ run, analyst }: { run: RunRecord; analyst: UseAnalyst })
       : null;
 
   return (
-    <section>
-      <div className="px-6 pt-5 pb-2">
-        <h3 className="text-body font-semibold tracking-tight text-ink">Questions on this run</h3>
-        <p className="mt-0.5 text-detail text-ink-muted">
-          Challenge a call or ask why. Questions and answers are saved with the run, and later runs
-          built on it read them.
-        </p>
-      </div>
+    <div className="sticky bottom-0 z-10 border-t border-line bg-sunken shadow-[0_-12px_24px_-16px_rgba(0,0,0,0.18)]">
+      {showThread ? (
+        <div
+          ref={thread}
+          className="max-h-[45dvh] overflow-y-auto border-b border-line bg-canvas"
+          aria-live="polite"
+        >
+          <div className="mx-auto max-w-3xl space-y-5 px-6 py-5">
+            {run.exchanges.map((x, i) => (
+              <div key={`${x.at}-${i}`} className="space-y-3">
+                <UserMessage text={x.question} at={x.at} />
+                <AnalystMessage text={x.answer} />
+              </div>
+            ))}
 
-      {run.exchanges.map((x, i) => (
-        <div key={`${x.at}-${i}`} className="border-t border-line">
-          <div className="bg-sunken px-6 py-3">
-            <div className="text-meta font-medium tracking-wide text-ink-subtle">
-              You · {formatDate(x.at)} {formatClock(x.at)}
-            </div>
-            <p className="mt-1 max-w-[72ch] text-detail leading-relaxed text-ink">{x.question}</p>
-          </div>
-          <div className="px-6 py-3">
-            <div className="text-meta font-medium tracking-wide text-accent-ink">Analyst</div>
-            <Prose className="mt-1 max-w-[72ch]" text={x.answer} />
-          </div>
-        </div>
-      ))}
+            {asking ? (
+              <div className="space-y-3">
+                <UserMessage text={asking} at={null} />
+                <div className="space-y-1.5" role="status">
+                  <div className="text-meta font-medium tracking-wide text-accent-ink">Analyst</div>
+                  <Skeleton className="h-3 w-56" />
+                  <Skeleton className="h-3 w-44" />
+                </div>
+              </div>
+            ) : null}
 
-      {asking ? (
-        <div className="border-t border-line">
-          <div className="bg-sunken px-6 py-3">
-            <div className="text-meta font-medium tracking-wide text-ink-subtle">You</div>
-            <p className="mt-1 text-detail leading-relaxed text-ink">{asking}</p>
-          </div>
-          <div className="space-y-1.5 px-6 py-3" role="status">
-            <div className="text-meta font-medium tracking-wide text-accent-ink">Analyst</div>
-            <Skeleton className="h-3 w-48" />
-            <Skeleton className="h-3 w-40" />
+            {askError ? (
+              <p className="rounded-md bg-loss-soft px-3 py-2 text-detail text-loss">{askError}</p>
+            ) : null}
           </div>
         </div>
       ) : null}
 
-      {askError ? <p className="border-t border-line bg-loss-soft px-6 py-2.5 text-detail text-loss">{askError}</p> : null}
-      <div ref={end} />
+      <div className="mx-auto max-w-3xl px-6 py-3">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
+          <button
+            type="button"
+            onClick={onToggle}
+            disabled={!hasThread}
+            aria-expanded={showThread}
+            className="flex items-center gap-1.5 text-meta font-medium text-ink-muted transition hover:text-ink disabled:cursor-default disabled:hover:text-ink-muted"
+          >
+            {hasThread ? (
+              <IconChevron
+                className={cn(
+                  "size-3.5 transition-transform",
+                  showThread ? "rotate-90" : "-rotate-90",
+                )}
+              />
+            ) : null}
+            {count ? `Questions on ${run.label} · ${count}` : `Ask about ${run.label}`}
+            {hasThread ? <span className="text-ink-subtle">{showThread ? "· hide" : "· show"}</span> : null}
+          </button>
+          <span className="text-meta text-ink-subtle">Saved with the run</span>
+        </div>
 
-      <Composer
-        onAsk={ask}
-        disabled={Boolean(asking) || !canAsk}
-        blocked={blocked}
-        suggest={run.exchanges.length === 0}
-      />
-    </section>
+        {count === 0 && !asking ? (
+          <div className="mb-2 flex flex-wrap gap-1.5">
+            {SUGGESTIONS.map((s) => (
+              <button
+                key={s}
+                type="button"
+                disabled={Boolean(asking) || !canAsk}
+                onClick={() => onAsk(s)}
+                className="rounded-md border border-line bg-canvas px-2 py-1 text-meta text-ink-muted transition hover:border-line-strong hover:text-ink disabled:opacity-40"
+              >
+                {s}
+              </button>
+            ))}
+          </div>
+        ) : null}
+
+        <Composer onAsk={onAsk} disabled={Boolean(asking) || !canAsk} />
+        {blocked ? <p className="mt-1.5 text-meta text-ink-subtle">{blocked}</p> : null}
+      </div>
+    </div>
   );
 }
 
-function Composer({
-  onAsk,
-  disabled,
-  blocked,
-  suggest,
-}: {
-  onAsk: (q: string) => void;
-  disabled: boolean;
-  blocked: string | null;
-  suggest: boolean;
-}) {
+function UserMessage({ text, at }: { text: string; at: string | null }) {
+  return (
+    <div className="flex flex-col items-end">
+      <p className="max-w-[85%] rounded-lg bg-accent-soft px-3 py-2 text-detail leading-relaxed whitespace-pre-wrap text-ink">
+        {text}
+      </p>
+      {at ? (
+        <span className="mt-1 text-meta text-ink-subtle">
+          {formatDate(at)} · {formatClock(at)}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function AnalystMessage({ text }: { text: string }) {
+  return (
+    <div>
+      <div className="text-meta font-medium tracking-wide text-accent-ink">Analyst</div>
+      <Prose className="mt-1" text={text} />
+    </div>
+  );
+}
+
+function Composer({ onAsk, disabled }: { onAsk: (q: string) => void; disabled: boolean }) {
   const [value, setValue] = useState("");
 
   function submit() {
@@ -523,49 +617,30 @@ function Composer({
   }
 
   return (
-    <div className="border-t border-line bg-sunken px-6 py-4">
-      {suggest ? (
-        <div className="mb-2 flex flex-wrap gap-1.5">
-          {SUGGESTIONS.map((s) => (
-            <button
-              key={s}
-              type="button"
-              disabled={disabled}
-              onClick={() => onAsk(s)}
-              className="rounded-md border border-line bg-canvas px-2 py-1 text-meta text-ink-muted transition hover:border-line-strong hover:text-ink disabled:opacity-40"
-            >
-              {s}
-            </button>
-          ))}
-        </div>
-      ) : null}
-
-      <div className="flex max-w-3xl items-end gap-2">
-        <textarea
-          rows={2}
-          value={value}
-          disabled={disabled}
-          onChange={(e) => setValue(e.target.value)}
-          // Enter sends, shift-Enter breaks the line.
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && !e.shiftKey) {
-              e.preventDefault();
-              submit();
-            }
-          }}
-          placeholder="Challenge a call, or ask why…"
-          className="min-h-16 w-full resize-none rounded-md border border-line-strong bg-surface px-3 py-2 text-detail text-ink outline-none transition placeholder:text-ink-subtle focus:border-accent disabled:opacity-60"
-        />
-        <button
-          type="button"
-          onClick={submit}
-          disabled={disabled || !value.trim()}
-          className="rounded-md bg-accent px-3 py-2 text-detail font-medium text-on-accent transition hover:bg-accent-hover disabled:opacity-40"
-        >
-          Ask
-        </button>
-      </div>
-      {blocked ? <p className="mt-2 text-meta text-ink-subtle">{blocked}</p> : null}
+    <div className="flex items-end gap-2 rounded-lg border border-line-strong bg-surface p-1.5 transition focus-within:border-accent">
+      <textarea
+        rows={1}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => setValue(e.target.value)}
+        // Enter sends, shift-Enter breaks the line.
+        onKeyDown={(e) => {
+          if (e.key === "Enter" && !e.shiftKey) {
+            e.preventDefault();
+            submit();
+          }
+        }}
+        placeholder="Challenge a call, or ask why…"
+        className="field-sizing-content max-h-40 min-h-9 w-full resize-none bg-transparent px-2 py-1.5 text-detail text-ink outline-none placeholder:text-ink-subtle disabled:opacity-60"
+      />
+      <button
+        type="button"
+        onClick={submit}
+        disabled={disabled || !value.trim()}
+        className="shrink-0 rounded-md bg-accent px-3 py-1.5 text-detail font-medium text-on-accent transition hover:bg-accent-hover disabled:opacity-40"
+      >
+        Ask
+      </button>
     </div>
   );
 }

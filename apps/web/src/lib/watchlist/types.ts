@@ -13,10 +13,19 @@ export interface WatchlistItemView {
   exchange: string;
   name: string | null;
   instrumentId: string;
+  /**
+   * A sector or fund category the source already knows — a mutual fund's AMFI
+   * category, say — for holdings the sector lookup table would not recognise.
+   */
+  sector?: string | null;
 }
+
+/** What a book of holdings is: a basket someone struck, or a broker portfolio. */
+export type BookKind = "watchlist" | "portfolio";
 
 export interface WatchlistSummary {
   id: string;
+  kind: BookKind;
   name: string;
   description: string | null;
   createdBy: ListOrigin;

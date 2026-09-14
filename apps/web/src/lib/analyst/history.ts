@@ -15,6 +15,8 @@
  */
 
 import { fetchHistory } from "@/services/market-service";
+import { fetchFundHistory } from "@/services/fund-service";
+import { isFundSymbol } from "@/lib/market/funds";
 import type { HistoryResult, SymbolHistory } from "@stealth/shared";
 
 /** Kept just under the function's own cap, so one stray symbol cannot 400 a batch. */
@@ -34,8 +36,18 @@ export async function fetchHistoryBatched(
   const missing: string[] = [];
   let asOf = new Date().toISOString();
 
-  for (let i = 0; i < symbols.length; i += BATCH) {
-    const batch = symbols.slice(i, i + BATCH);
+  // Mutual funds have no Yahoo series; their NAVs come from mfapi.in, keyed by
+  // ISIN, and join the same result so no caller has to know a fund is different.
+  const funds = symbols.filter(isFundSymbol);
+  const listed = symbols.filter((s) => !isFundSymbol(s));
+  if (funds.length) {
+    const result = await fetchFundHistory(funds, from, to, signal);
+    history.push(...result.history);
+    missing.push(...result.missing);
+  }
+
+  for (let i = 0; i < listed.length; i += BATCH) {
+    const batch = listed.slice(i, i + BATCH);
     const result = await fetchHistory(batch, from, to, signal);
     history.push(...result.history);
     missing.push(...result.missing);

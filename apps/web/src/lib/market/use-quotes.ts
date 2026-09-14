@@ -1,6 +1,7 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { getSnapshot, refresh, retain, subscribe } from "./quote-store";
 import type { QuoteMap } from "@stealth/shared";
+import { isFundSymbol } from "./funds";
 
 export interface UseQuotes {
   quotes: QuoteMap;
@@ -16,7 +17,9 @@ export function useQuotes(yahooSymbols: string[]): UseQuotes {
   const snapshot = useSyncExternalStore(subscribe, getSnapshot);
   // The dep is the joined string, not the array — callers build a new array
   // every render, which would otherwise re-run this effect every render too.
-  const key = yahooSymbols.join(",");
+  // Mutual funds have no quote on Yahoo — their price is a daily NAV — so they
+  // are never sent to the poll, where they would only come back as "missing".
+  const key = yahooSymbols.filter((s) => !isFundSymbol(s)).join(",");
 
   useEffect(() => {
     if (!key) return;

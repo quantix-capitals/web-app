@@ -1,5 +1,5 @@
-import { lazy, Suspense, useCallback, useMemo } from "react";
-import { useParams, useSearchParams } from "react-router-dom";
+import { useMemo } from "react";
+import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IconWatchlist } from "@/components/shell/nav-icons";
 import {
@@ -30,28 +30,9 @@ import { BasketSettings } from "./basket-settings";
 import { basketDetail, removeItem, setEntry } from "@/services/watchlist-service";
 import { basketKey } from "./keys";
 import { NotFound } from "@/pages/not-found";
-import { useAnalyst } from "@/lib/analyst/use-analyst";
+import { BookPanel } from "../book/book-panel";
+import { SHARED_VIEWS, bookTabs, isSharedView, useBookWorkspace } from "../book/use-book-workspace";
 
-/**
- * The dashboard is a separate chunk. It pulls in Highcharts and the whole
- * analytics layer, and a reader who only ever opens the ledger should never
- * download either — which is the same reason the routes in `App.tsx` are lazy.
- */
-const Dashboard = lazy(() =>
-  import("./dashboard/dashboard").then((m) => ({ default: m.Dashboard })),
-);
-
-/**
- * The analyst's stored runs and the basket's brief, split out for the same
- * reason: the run report draws Highcharts, and neither tab is the page most
- * readers came for.
- */
-const AnalystView = lazy(() =>
-  import("./analyst/analyst-view").then((m) => ({ default: m.AnalystView })),
-);
-const BriefView = lazy(() =>
-  import("./brief/brief-view").then((m) => ({ default: m.BriefView })),
-);
 
 /**
  * Which half of the page is showing. It lives in the URL rather than in state
@@ -60,7 +41,7 @@ const BriefView = lazy(() =>
  */
 type View = "ledger" | "dashboard" | "brief" | "analyst";
 
-const VIEWS: readonly View[] = ["ledger", "dashboard", "brief", "analyst"];
+const VIEWS: readonly View[] = ["ledger", ...SHARED_VIEWS];
 
 /**
  * One basket. The id comes from the route; the row comes back scoped by RLS, so
@@ -154,15 +135,12 @@ function BasketLoading() {
 }
 
 function BasketView({ list }: { list: WatchlistSummary }) {
-  const [params, setParams] = useSearchParams();
-  const view: View = VIEWS.find((v) => v === params.get("view")) ?? "ledger";
-
-  const setView = (next: View) => {
-    const updated = new URLSearchParams(params);
-    if (next === "ledger") updated.delete("view");
-    else updated.set("view", next);
-    setParams(updated);
-  };
+  // The URL-driven tabs, the analyst and the sticky chrome are shared with the
+  // portfolio page — both are a book of holdings — so they live in `pages/book`.
+  const { view, setView, analyst, selectRun, chromeRef, chromeStyle } = useBookWorkspace(list, {
+    views: VIEWS,
+    defaultView: "ledger",
+  });
 
   const yahooSymbols = useMemo(
     () =>
@@ -174,37 +152,6 @@ function BasketView({ list }: { list: WatchlistSummary }) {
   const { quotes, refresh, status, error, missing } = useQuotes(yahooSymbols);
   const totals = useMemo(() => listPnl(list.items, quotes), [list.items, quotes]);
 
-  // The analyst's remit is this basket and nothing else: its runs, its brief and
-  // its prices are all scoped to `list.id`. The hook lives here rather than in
-  // the tab so a run keeps going when the reader flips back to the ledger; the
-  // extra prices it needs load only once the Analyst tab is opened.
-  //
-  // Which run is open lives in the URL (`?run=`), like the view, so a run can be
-  // linked to and the back button walks between runs.
-  const runParam = params.get("run");
-  const selectRun = useCallback(
-    (id: string) =>
-      setParams((prev) => {
-        const next = new URLSearchParams(prev);
-        next.set("view", "analyst");
-        next.set("run", id);
-        return next;
-      }),
-    [setParams],
-  );
-  const onRunSaved = useCallback(
-    (id: string) =>
-      setParams(
-        (prev) => {
-          const next = new URLSearchParams(prev);
-          next.set("run", id);
-          return next;
-        },
-        { replace: true },
-      ),
-    [setParams],
-  );
-  const analyst = useAnalyst(list, { active: view === "analyst", runParam, onRunSaved });
   const struck = formatDate(list.createdAt);
   // Nothing priced yet says nothing about *why* — still fetching, the feed
   // came back empty, or it errored are three different facts that all sat
@@ -214,8 +161,12 @@ function BasketView({ list }: { list: WatchlistSummary }) {
     value === null ? (loadingPrices ? <SkeletonFigure /> : "—") : formatMoney(value, signed);
 
   return (
-    <div className="bg-canvas">
+    <div
+      className="bg-canvas"
+      style={chromeStyle}
+    >
       <div className="min-w-0">
+        <div ref={chromeRef} className="sticky top-0 z-20 bg-canvas">
         {/* The back control shares the header's first line rather than owning a
             row of its own above it — one line of chrome, not two.
 
@@ -225,7 +176,7 @@ function BasketView({ list }: { list: WatchlistSummary }) {
             to be told how wide it is, and told again every time the rail
             collapses. It carries its own `bg-canvas` because a sticky element
             with a transparent ground has the page scrolling visibly through it. */}
-        <header className="sticky top-0 z-20 flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
+        <header className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3 border-b border-line bg-canvas px-6 py-5">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
               <BackLink href="/watchlist" label="Back to watchlist" />
@@ -279,37 +230,24 @@ function BasketView({ list }: { list: WatchlistSummary }) {
             onChange={setView}
             tabs={[
               { id: "ledger", label: "Ledger", count: list.items.length },
-              { id: "dashboard", label: "Dashboard" },
-              { id: "brief", label: "Brief" },
               // The analyst is open to anyone who can see the basket: asking "is
               // this basket any good?" of a public basket is a fair question, and
               // the runs a reader makes are their own.
-              {
-                id: "analyst",
-                label: "Analyst",
-                count: analyst.runsStatus === "ready" ? analyst.runs.length : undefined,
-              },
+              ...bookTabs(analyst),
             ]}
           />
         </Section>
+        </div>
 
-        {view === "dashboard" ? (
-          <Suspense fallback={<DashboardFallback />}>
-            <Dashboard list={list} />
-          </Suspense>
-        ) : view === "brief" ? (
-          <Suspense fallback={<DashboardFallback />}>
-            <BriefView list={list} />
-          </Suspense>
-        ) : view === "analyst" ? (
-          <Suspense fallback={<DashboardFallback />}>
-            <AnalystView
-              list={list}
-              analyst={analyst}
-              onSelect={selectRun}
-              onOpenBrief={() => setView("brief")}
-            />
-          </Suspense>
+        {isSharedView(view) ? (
+          <BookPanel
+            view={view}
+            list={list}
+            analyst={analyst}
+            onSelectRun={selectRun}
+            onOpenBrief={() => setView("brief")}
+            fallback={<DashboardFallback />}
+          />
         ) : (
           <Ledger
             list={list}

@@ -37,9 +37,11 @@ export function AnalystView({
   const waitingForList = analyst.runsStatus === "loading" && analyst.selectedRunId === null;
 
   return (
-    <div className="flex flex-col lg:flex-row lg:items-stretch">
+    // `items-start` is what lets the run list's `sticky` work against this row:
+    // a stretched flex child is as tall as the report and has nowhere to stick.
+    <div className="flex flex-col lg:flex-row lg:items-start">
       <RunList analyst={analyst} onSelect={onSelect} />
-      <div className="min-w-0 flex-1 border-line lg:border-l">
+      <div className="min-w-0 flex-1">
         {waitingForList ? (
           <PaneSkeleton />
         ) : analyst.selectedRunId === null ? (
@@ -61,9 +63,13 @@ function RunList({ analyst, onSelect }: { analyst: UseAnalyst; onSelect: (id: st
   return (
     <nav
       aria-label="Analyst runs"
-      className="shrink-0 border-b border-line bg-sunken lg:w-72 lg:border-b-0"
+      // On a wide screen the list is its own scroller, pinned under the basket's
+      // header and tabs (`--basket-chrome`, measured in `basket.tsx`) and as tall
+      // as the rest of the viewport — so a long list of runs scrolls without
+      // moving the report, and a long report scrolls without losing the list.
+      className="shrink-0 border-b border-line bg-sunken lg:sticky lg:top-[var(--basket-chrome,0px)] lg:h-[calc(100dvh-var(--basket-chrome,0px))] lg:w-72 lg:overflow-y-auto lg:border-r lg:border-b-0"
     >
-      <div className="px-6 py-4 lg:px-4">
+      <div className="bg-sunken px-6 py-4 lg:sticky lg:top-0 lg:z-10 lg:px-4">
         <button
           type="button"
           onClick={() => onSelect("new")}
@@ -107,7 +113,7 @@ function RunList({ analyst, onSelect }: { analyst: UseAnalyst; onSelect: (id: st
       ) : null}
 
       {runs.length ? (
-        <ol className="max-h-80 overflow-y-auto border-t border-line lg:max-h-none">
+        <ol className="max-h-80 overflow-y-auto border-t border-line lg:max-h-none lg:overflow-visible">
           {runs.map((run) => (
             <li key={run.id}>
               <RunRow

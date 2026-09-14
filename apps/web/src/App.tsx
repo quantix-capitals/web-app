@@ -21,7 +21,7 @@ const Basket = lazy(() =>
   import("./pages/watchlist/basket").then((m) => ({ default: m.Basket })),
 );
 const Portfolio = lazy(() =>
-  import("./pages/portfolio").then((m) => ({ default: m.Portfolio })),
+  import("./pages/portfolio/portfolio").then((m) => ({ default: m.Portfolio })),
 );
 const Momentum = lazy(() => import("./pages/momentum").then((m) => ({ default: m.Momentum })));
 const Profile = lazy(() => import("./pages/profile").then((m) => ({ default: m.Profile })));
